@@ -1,0 +1,7 @@
+django
+psycopg2
+django-filter
+django_graphiql
+graphql-core
+graphene
+graphene-django
