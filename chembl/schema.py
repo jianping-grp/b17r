@@ -1,55 +1,35 @@
 from . import models as chembl_models
-from graphene import AbstractType, Node
+from graphene import AbstractType, Node, resolve_only_args, ObjectType
 from graphene_django import DjangoObjectType
-import django
-from share.graphql_helper import query_register
+from django.db.models import Model
+from share.graphql_helper import node_register
+import inspect
+import graphene
+from graphene_django.filter import DjangoFilterConnectionField
 
+node_dic = {}
+for cls_name, cls in inspect.getmembers(chembl_models, inspect.isclass):
+    node = type(
+        cls_name + 'Node',
+        (DjangoObjectType,),
+        {
+            'Meta': type('Meta', (object,), {'model': cls, 'interfaces': (Node, )})
+        }
 
+    )
+    node_dic[cls_name] = node
+
+#node
+@node_register(node_dic.values())
 class Query(AbstractType):
     pass
 
-
-@query_register(Query)
-class ActionTypeNode(DjangoObjectType):
-    class Meta:
-        model = chembl_models.ActionType
-        interfaces = (Node,)
-
-
-@query_register(Query)
-class ActivitiesNode(DjangoObjectType):
+class Activities(DjangoObjectType):
     class Meta:
         model = chembl_models.Activities
-        interfaces = (Node,)
+        interfaces = (Node, )
 
 
-@query_register(Query)
-class ActivityStdsLookupNode(DjangoObjectType):
-    class Meta:
-        model = chembl_models.ActivityStdsLookup
-        interfaces = (Node,)
-
-
-@query_register(Query)
-class AssayParametersNode(DjangoObjectType):
-    class Meta:
-        model = chembl_models.AssayParameters
-        interfaces = (Node,)
-
-
-@query_register(Query)
-class AssayTypeNode(DjangoObjectType):
-    class Meta:
-        model = chembl_models.ActionType
-        interfaces = (Node,)
-
-
-@query_register(Query)
-class AssaysNode(DjangoObjectType):
-    class Meta:
-        model = chembl_models.Assays
-        interfaces = (Node,)
-
-for attr in dir(chembl_models):
-    if isinstance(chembl_models, django.db.models.ModelBase):
-        pass # todo to be continue
+class Query2(AbstractType):
+    bbb = Node.Field(Activities)
+    aaa = DjangoFilterConnectionField(Activities)
