@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'chembl'
 ]
 
@@ -48,6 +49,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware'
 ]
 
 ROOT_URLCONF = 'chembl_explorer.urls'
@@ -133,3 +135,6 @@ GRAPHENE = {
     'SCHEMA': 'chembl_explorer.schema.schema',
     'SCHEMA_INDENT': 2
 }
+
+# Cors 
+CORS_ORIGIN_ALLOW_ALL = True
