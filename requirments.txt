@@ -5,3 +5,4 @@ django_graphiql
 graphql-core
 graphene
 graphene-django
+django-cors-headers
