@@ -7,5 +7,21 @@
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
       <jdbc-url>jdbc:postgresql://localhost:5432/chembl_22</jdbc-url>
     </data-source>
+    <data-source source="LOCAL" name="Django default" uuid="5c659b9b-cd71-49ae-97fa-2133ba4b5775">
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <imported>true</imported>
+      <remarks>$PROJECT_DIR$/chembl_explorer/settings.py</remarks>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://127.0.0.1/chembl_22</jdbc-url>
+      <libraries>
+        <library>
+          <url>file://$APPLICATION_CONFIG_DIR$/jdbc-drivers/PostgreSQL/9.4-1201/postgresql-9.4-1201.jdbc4.jar</url>
+        </library>
+        <library>
+          <url>file://$APPLICATION_CONFIG_DIR$/jdbc-drivers/PostgreSQL/9.4-1201/postgresql-driver-license.txt</url>
+        </library>
+      </libraries>
+    </data-source>
   </component>
 </project>

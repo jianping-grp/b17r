@@ -20,16 +20,17 @@ for cls_name, cls in inspect.getmembers(chembl_models, inspect.isclass):
     node_dic[cls_name] = node
 
 #node
-@node_register(node_dic.values())
-class Query(AbstractType):
-    pass
-
-class Activities(DjangoObjectType):
+class ActivitiesNode(DjangoObjectType):
     class Meta:
         model = chembl_models.Activities
         interfaces = (Node, )
+        filter_fields = {
+            'activity_comment': ['exact', 'icontains', 'istartswith']
+        }
+
+node_dic['Activities'] = ActivitiesNode
 
 
-class Query2(AbstractType):
-    bbb = Node.Field(Activities)
-    aaa = DjangoFilterConnectionField(Activities)
+@node_register(node_dic.values())
+class Query(AbstractType):
+    pass

@@ -3,7 +3,7 @@ from graphene_django.debug import DjangoDebug
 import chembl.schema
 
 
-class Query(chembl.schema.Query, chembl.schema.Query2, graphene.ObjectType):
+class Query(chembl.schema.Query, graphene.ObjectType):
     debug = graphene.Field(DjangoDebug, name='__debug')
 
 
