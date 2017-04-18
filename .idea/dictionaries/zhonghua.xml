@@ -2,6 +2,8 @@
   <dictionary name="zhonghua">
     <words>
       <w>chembl</w>
+      <w>molregno</w>
+      <w>phin</w>
     </words>
   </dictionary>
 </component>
