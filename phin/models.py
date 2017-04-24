@@ -114,7 +114,7 @@ class TargetInteraction(models.Model):
     mean = models.FloatField(blank=True, null=True)
     median = models.FloatField(blank=True, null=True)
 
-    
+
 
 
 class TargetScaffoldInteraction(models.Model):
