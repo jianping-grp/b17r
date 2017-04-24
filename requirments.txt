@@ -6,3 +6,4 @@ graphql-core
 graphene
 graphene-django
 django-cors-headers
+pandas
