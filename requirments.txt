@@ -7,3 +7,8 @@ graphene
 graphene-django
 django-cors-headers
 pandas
+pillow
+djangorestframework
+markdown
+djoser
+dynamic-rest

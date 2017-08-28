@@ -3,6 +3,7 @@ from chembl import models as chembl_models
 from rdkit import Chem
 from rdkit.Chem.Scaffolds import MurckoScaffold
 from django_rdkit.models import *
+import itertools as it
 
 
 def init_phin_molecule_tbl():
@@ -77,7 +78,6 @@ def init_phin_activities_tbl():
 
 
 def init_target_interaction_tbl():
-    import itertools as it
     # exclude uncheck chembl (chembl912545)
     # todo: exclude target with 0 'valid' activity
     target_set = Target.objects.all().annotate(act_count=Count('activities')).order_by('-act_count')[1:]
@@ -119,7 +119,6 @@ def init_scaffold_activities_tbl():
 
 
 def init_target_scaffold_interaction_tbl():
-    import itertools as it
     # exclude uncheck chembl (chembl912545)
     # todo: exclude target with 0 valid scaffold activity
     target_set = Target.objects.all().annotate(act_count=Count('scaffoldactivities')).filter(act_count__gt=0).order_by('-act_count')[1:]

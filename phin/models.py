@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 from chembl import models as chembl_models
 from django.db import models, connection
+from django.db.models import Q
 from django_rdkit.models.fields import MolField, BfpField
 from sql_helper import *
 import pandas as pd
@@ -39,6 +40,11 @@ class Target(models.Model):
         chembl_models.TargetDictionary,
         related_name='chembl_target'
     )
+
+    def _get_related_targets(self):
+        return TargetInteraction.objects.get_target_interaction(self.target_id)
+
+    # related_targets = property(_get_related_targets)
 
     def _get_scaffold_activites(self):
         """
@@ -100,6 +106,13 @@ class ScaffoldActivities(models.Model):
     count = models.IntegerField(blank=True, null=True)
 
 
+class TargetInteractionManager(models.Manager):
+    def get_target_interaction(self, target_id):
+        return super(TargetInteractionManager, self).get_queryset().filter(
+            Q(first_target_id=target_id) | Q(second_target_id=target_id)
+        )
+
+
 class TargetInteraction(models.Model):
     """
     first_target.tid_id > second_target.tid_id
@@ -114,7 +127,7 @@ class TargetInteraction(models.Model):
     mean = models.FloatField(blank=True, null=True)
     median = models.FloatField(blank=True, null=True)
 
-
+    objects = TargetInteractionManager()
 
 
 class TargetScaffoldInteraction(models.Model):
@@ -130,5 +143,3 @@ class TargetScaffoldInteraction(models.Model):
     max = models.FloatField(blank=True, null=True)
     mean = models.FloatField(blank=True, null=True)
     median = models.FloatField(blank=True, null=True)
-
-

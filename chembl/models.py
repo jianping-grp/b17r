@@ -176,7 +176,7 @@ class BiotherapeuticComponents(models.Model):
 
 
 class Biotherapeutics(models.Model):
-    molregno = models.ForeignKey('MoleculeDictionary', models.DO_NOTHING, db_column='molregno', primary_key=True)
+    molregno = models.OneToOneField('MoleculeDictionary', models.DO_NOTHING, db_column='molregno', primary_key=True)
     description = models.CharField(max_length=2000, blank=True, null=True)
     helm_notation = models.CharField(max_length=4000, blank=True, null=True)
 
@@ -281,7 +281,7 @@ class ComponentSynonyms(models.Model):
 
 
 class CompoundProperties(models.Model):
-    molregno = models.ForeignKey('MoleculeDictionary', models.DO_NOTHING, db_column='molregno', primary_key=True)
+    molregno = models.OneToOneField('MoleculeDictionary', models.DO_NOTHING, db_column='molregno', primary_key=True)
     mw_freebase = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True)
     alogp = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True)
     hba = models.SmallIntegerField(blank=True, null=True)
@@ -337,7 +337,7 @@ class CompoundStructuralAlerts(models.Model):
 
 
 class CompoundStructures(models.Model):
-    molregno = models.ForeignKey('MoleculeDictionary', models.DO_NOTHING, db_column='molregno', primary_key=True)
+    molregno = models.OneToOneField('MoleculeDictionary', models.DO_NOTHING, db_column='molregno', primary_key=True)
     molfile = models.TextField(blank=True, null=True)
     standard_inchi = models.CharField(max_length=4000, blank=True, null=True)
     standard_inchi_key = models.CharField(max_length=27)
@@ -550,7 +550,7 @@ class IracClassification(models.Model):
 
 
 class LigandEff(models.Model):
-    activity = models.ForeignKey(Activities, models.DO_NOTHING, primary_key=True)
+    activity = models.OneToOneField(Activities, models.DO_NOTHING, primary_key=True)
     bei = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True)
     sei = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True)
     le = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True)
@@ -681,7 +681,7 @@ class MoleculeFracClassification(models.Model):
 
 
 class MoleculeHierarchy(models.Model):
-    molregno = models.ForeignKey(
+    molregno = models.OneToOneField(
         MoleculeDictionary,
         models.DO_NOTHING,
         db_column='molregno',
