@@ -12,3 +12,4 @@ djangorestframework
 markdown
 djoser
 dynamic-rest
+inflect
