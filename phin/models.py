@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from chembl import models as chembl_models
 from django.db import models, connection
-from django.db.models import Q
+from django.db.models import Q, Count
 from django_rdkit.models.fields import MolField, BfpField
 from sql_helper import *
 import pandas as pd
@@ -41,8 +41,9 @@ class Target(models.Model):
         related_name='chembl_target'
     )
 
-    def _get_related_targets(self):
-        return TargetInteraction.objects.get_target_interaction(self.target_id)
+    def get_related_targets(self):
+        return TargetInteraction.objects.get_target_interaction(self.target_id)\
+            .distinct().values('first_target', 'second_target')
 
     # related_targets = property(_get_related_targets)
 

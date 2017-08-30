@@ -1,4 +1,6 @@
 # sql expression for retrieving all valid pchembl value and the corresponding parent molecule
+
+# retrieve all pchembl value of the specified target
 TARGET_PCHEMBL_ALL = """
     SELECT 
       molecule_dictionary.molregno, 
@@ -19,6 +21,7 @@ TARGET_PCHEMBL_ALL = """
       activities.pchembl_value IS NOT NULL ;
 """
 
+# retrieve common activities of two target
 TARGET_COMMON_ACTIVITY = """
     SELECT 
       act1.molecule_id,
@@ -36,6 +39,7 @@ TARGET_COMMON_ACTIVITY = """
       ;
 """
 
+# retrieve all scaffold activities of the specified target
 TARGET_SCAFFOLD_ACTIVITIES = """
     SELECT 
       MIN(phin_activities.mean) as min,
@@ -59,7 +63,7 @@ TARGET_SCAFFOLD_ACTIVITIES = """
      ;
 """
 
-
+# retrieve all scaffold activities in common of two target
 TARGET_COMMON_SCAFFOLD_ACTIVITY = """
     SELECT 
       act1.scaffold_id,

@@ -363,5 +363,3 @@ class VariantSequencesViewSet(viewsets.DynamicModelViewSet):
 class VersionViewSet(viewsets.DynamicModelViewSet):
     queryset = models.Version.objects.all()
     serializer_class = serializers.VersionSerializer
-
-
