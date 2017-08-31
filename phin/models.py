@@ -41,6 +41,11 @@ class Target(models.Model):
         related_name='chembl_target'
     )
 
+    def get_target_interaction(self, activity_type='mean'):
+        with connection.cursor() as cursor:
+            cursor.execute(TARGET_INTERACTION.format(activity_type, self.target_id))
+            return pd.DataFrame(cursor.fetchall(), columns=['first_target', 'second_target', 'activity'])
+
     def get_related_targets(self):
         return TargetInteraction.objects.get_target_interaction(self.target_id)\
             .distinct().values('first_target', 'second_target')
