@@ -1,6 +1,8 @@
 
 from rest_framework import generics, permissions
 from dynamic_rest import viewsets
+from rest_framework.response import Response
+from rest_framework.decorators import api_view
 from . import models, serializers
 
 
@@ -37,5 +39,16 @@ class TargetScaffoldInteractionViewSet(viewsets.DynamicModelViewSet):
 class TargetViewSet(viewsets.DynamicModelViewSet):
     queryset = models.Target.objects.all()
     serializer_class = serializers.TargetSerializer
+
+
+# custom api
+@api_view(['GET'])
+def get_related_target(request, target_id):
+    print target_id
+    target = models.Target.objects.get(pk=target_id)
+    related_targets = target.get_target_interaction().to_dict(orient='records')
+
+    #print related_targets
+    return Response(related_targets)
 
 
