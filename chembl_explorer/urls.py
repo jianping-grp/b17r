@@ -19,7 +19,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from graphene_django.views import GraphQLView
 from chembl import urls as chembl_urls
-from phin import  urls as phin_urls
+from phin import urls as phin_urls
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
