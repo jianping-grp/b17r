@@ -1,4 +1,4 @@
-
+from django.db.models import Count
 from rest_framework import generics, permissions
 from dynamic_rest import viewsets
 from . import models, serializers
@@ -331,7 +331,10 @@ class TargetComponentsViewSet(viewsets.DynamicModelViewSet):
 
 
 class TargetDictionaryViewSet(viewsets.DynamicModelViewSet):
-    queryset = models.TargetDictionary.objects.all()
+    queryset = models.TargetDictionary.objects.all()\
+        .annotate(
+        activities_count=Count('assays__activities')
+    )
     serializer_class = serializers.TargetDictionarySerializer
 
 

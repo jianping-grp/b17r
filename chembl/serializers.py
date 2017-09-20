@@ -1,3 +1,4 @@
+from rest_framework.fields import IntegerField
 
 from . import models
 from dynamic_rest import serializers
@@ -10,6 +11,8 @@ class ActionTypeSerializer(serializers.DynamicModelSerializer):
 
 
 class ActivitiesSerializer(serializers.DynamicModelSerializer):
+    assay = serializers.DynamicRelationField('AssaysSerializer')
+
     class Meta:
         model = models.Activities
         exclude = []
@@ -394,6 +397,9 @@ class TargetComponentsSerializer(serializers.DynamicModelSerializer):
 
 
 class TargetDictionarySerializer(serializers.DynamicModelSerializer):
+    # assays_set = serializers.DynamicRelationField(AssaysSerializer, many=True)
+    activities_count = IntegerField(read_only=True)
+
     class Meta:
         model = models.TargetDictionary
         exclude = []
@@ -433,5 +439,4 @@ class VersionSerializer(serializers.DynamicModelSerializer):
     class Meta:
         model = models.Version
         exclude = []
-
 
