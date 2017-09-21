@@ -12,10 +12,11 @@ class ActionTypeSerializer(serializers.DynamicModelSerializer):
 
 class ActivitiesSerializer(serializers.DynamicModelSerializer):
     assay = serializers.DynamicRelationField('AssaysSerializer')
+    molregno = serializers.DynamicRelationField('CompoundStructuresSerializer', embed=True)
 
     class Meta:
         model = models.Activities
-        exclude = []
+        exclude = ['molregno']
 
 
 class ActivityStdsLookupSerializer(serializers.DynamicModelSerializer):
