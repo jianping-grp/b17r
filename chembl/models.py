@@ -962,6 +962,7 @@ class TargetDictionary(models.Model):
     class Meta:
         managed = False
         db_table = 'target_dictionary'
+        ordering = ('tid',)
 
 
 class TargetRelations(models.Model):

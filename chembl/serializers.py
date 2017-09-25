@@ -392,6 +392,8 @@ class StructuralAlertsSerializer(serializers.DynamicModelSerializer):
 
 
 class TargetComponentsSerializer(serializers.DynamicModelSerializer):
+    component = serializers.DynamicRelationField('ComponentSequencesSerializer', embed=True)
+
     class Meta:
         model = models.TargetComponents
         exclude = []
@@ -399,7 +401,9 @@ class TargetComponentsSerializer(serializers.DynamicModelSerializer):
 
 class TargetDictionarySerializer(serializers.DynamicModelSerializer):
     # assays_set = serializers.DynamicRelationField(AssaysSerializer, many=True)
-    activities_count = IntegerField(read_only=True)
+    assays_count = IntegerField(read_only=True)
+    target_type = serializers.DynamicRelationField('TargetTypeSerializer')
+    targetcomponents_set = serializers.DynamicRelationField('TargetComponentsSerializer', many=True, embed=True)
 
     class Meta:
         model = models.TargetDictionary

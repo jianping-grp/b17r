@@ -333,7 +333,7 @@ class TargetComponentsViewSet(viewsets.DynamicModelViewSet):
 class TargetDictionaryViewSet(viewsets.DynamicModelViewSet):
     queryset = models.TargetDictionary.objects.all()\
         .annotate(
-        activities_count=Count('assays__activities')
+        assays_count=Count('assays')
     )
     serializer_class = serializers.TargetDictionarySerializer
 
