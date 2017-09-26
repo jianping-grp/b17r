@@ -15,4 +15,5 @@ routers.register('targets', views.TargetViewSet)
 urlpatterns = routers.urls
 urlpatterns += [
     url(r'^related-targets/(?P<target_id>[0-9]+)', views.get_related_target),
+    url(r'^related-targets-list/', views.get_related_target_list)
 ]

@@ -54,12 +54,15 @@ def get_related_target(request, target_id):
     #print related_targets
     return Response(related_targets)
 
-@api_view(['GET'])
-def get_related_target_list(request, target_id_list):
+
+@api_view(['POST'])
+def get_related_target_list(request):
+    target_id_list = request.POST['target-id-list']
     print target_id_list
     with connection.cursor() as cursor:
         # use mean as default
         cursor.execute(sql_helper.TARGET_INTERACTION_LIST.format('mean', str(target_id_list)))
         data = pd.DataFrame(cursor.fetchall(), columns=['first_target', 'second_target', 'activity'])
+        return Response(data.to_dict(orient='records'))
 
 
