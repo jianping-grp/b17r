@@ -1,8 +1,11 @@
 
 from rest_framework import generics, permissions
+from django.db import connection
 from dynamic_rest import viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
+import pandas as pd
+from . import sql_helper
 from . import models, serializers
 
 
@@ -50,5 +53,13 @@ def get_related_target(request, target_id):
 
     #print related_targets
     return Response(related_targets)
+
+@api_view(['GET'])
+def get_related_target_list(request, target_id_list):
+    print target_id_list
+    with connection.cursor() as cursor:
+        # use mean as default
+        cursor.execute(sql_helper.TARGET_INTERACTION_LIST.format('mean', str(target_id_list)))
+        data = pd.DataFrame(cursor.fetchall(), columns=['first_target', 'second_target', 'activity'])
 
 

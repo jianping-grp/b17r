@@ -45,7 +45,7 @@ class Target(models.Model):
         with connection.cursor() as cursor:
             cursor.execute(TARGET_INTERACTION.format(activity_type, self.target_id))
             data = pd.DataFrame(cursor.fetchall(), columns=['first_target', 'second_target', 'activity'])
-            print data
+            # print data
             return data
 
     def get_related_targets(self):
