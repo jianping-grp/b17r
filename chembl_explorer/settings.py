@@ -149,10 +149,15 @@ REST_FRAMEWORK = {
         'django_filters.rest_framework.DjangoFilterBackend',
     ),
     'DEFAULT_PERMISSION_CLASSES': [
-       # 'rest_framework.permissions.IsAuthenticatedOrReadOnly'
-        'rest_framework.permissions.AllowAny'
+       'rest_framework.permissions.IsAuthenticatedOrReadOnly'
+       #  'rest_framework.permissions.AllowAny'
     ]
 
+}
+
+# DYNAMIC REST
+DYNAMIC_REST = {
+    'ENABLE_LINKS': False
 }
 # REST CORS
 # Cors

@@ -12,7 +12,7 @@ class ActionTypeSerializer(serializers.DynamicModelSerializer):
 
 class ActivitiesSerializer(serializers.DynamicModelSerializer):
     assay = serializers.DynamicRelationField('AssaysSerializer')
-    molregno = serializers.DynamicRelationField('CompoundStructuresSerializer', embed=True)
+    molregno = serializers.DynamicRelationField('MoleculeDictionarySerializer', embed=True, deferred=True)
 
     class Meta:
         model = models.Activities
@@ -260,6 +260,8 @@ class MoleculeAtcClassificationSerializer(serializers.DynamicModelSerializer):
 
 
 class MoleculeDictionarySerializer(serializers.DynamicModelSerializer):
+    compoundstructures = serializers.DynamicRelationField('CompoundStructuresSerializer', embed=True, deferred=True)
+
     class Meta:
         model = models.MoleculeDictionary
         exclude = []
@@ -444,4 +446,3 @@ class VersionSerializer(serializers.DynamicModelSerializer):
     class Meta:
         model = models.Version
         exclude = []
-

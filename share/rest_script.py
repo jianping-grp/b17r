@@ -1,4 +1,6 @@
 from django.db.models.base import ModelBase
+from django.db.models.fields.related_descriptors import ForwardManyToOneDescriptor, ManyToManyDescriptor, \
+    ReverseManyToOneDescriptor, ReverseOneToOneDescriptor, ForwardOneToOneDescriptor
 from rest_framework.serializers import SerializerMetaclass
 import inflect
 import re
@@ -27,15 +29,27 @@ routers = routers.DefaultRouter()
 """
 
 
-def _list_classes(app_model, cls):
-    for el in dir(app_model):
-        obj = getattr(app_model, el)
+def _model2serializer_name(model_name):
+    return model_name + 'Serializer'
+
+
+def _list_classes(pkg, cls):
+    """
+    list target classes of pkg
+    :param pkg: package
+    :param cls: target class
+    :return:
+    """
+
+    for el in dir(pkg):
+        obj = getattr(pkg, el)
         if type(obj) == cls:
             yield obj
 
 
-def _cls2serializer(cls):
-    yield "class {0}Serializer(serializers.DynamicModelSerializer):".format(cls.__name__)
+def _cls2serializer(cls, related_serializer=''):
+    yield "class {0}(serializers.DynamicModelSerializer):".format(_model2serializer_name(cls.__name__))
+    yield "{0}".format(related_serializer)  # related serializers
     yield "    class Meta:"
     yield "        model = models.{0}".format(cls.__name__)
     yield "        exclude = []"
@@ -68,7 +82,43 @@ def create_serializers(app_model, file_path):
         w.write(serializer_header)
         for cls in _list_classes(app_model, ModelBase):
             print cls.__name__
-            for line in _cls2serializer(cls):
+            related_serializer_list = []
+            for attr in dir(cls):
+                # iterate attr and create related serializer
+                attr_class = getattr(cls, attr)
+                # many = True
+                if type(attr_class) == ReverseManyToOneDescriptor:
+                    print attr_class
+                    model_name = attr_class.field.model.__name__
+                    related_serializer_list.append(
+                        "    {0} = serializers.DynamicRelationField('{1}', many=True, deferred=True)".format(
+                            attr,
+                            _model2serializer_name(model_name)
+                        )
+                    )
+                    # many = Flase
+                elif type(attr_class) == ReverseOneToOneDescriptor:
+                    model_name = attr_class.related.field.model.__name__
+                    related_serializer_list.append(
+                        "    {0} = serializers.DynamicRelationField('{1}')".format(
+                            attr,
+                            _model2serializer_name(model_name)
+                        )
+                    )
+                elif type(attr_class) in [
+                    ForwardOneToOneDescriptor,
+                    ForwardManyToOneDescriptor
+                ]:
+                    model_name = type(attr_class.field.related_model()).__name__
+                    related_serializer_list.append(
+                        "    {0} = serializers.DynamicRelationField('{1}')".format(
+                            attr,
+                            _model2serializer_name(model_name)
+                        )
+                    )
+            print related_serializer_list
+            for line in _cls2serializer(cls,
+                                        '\n'.join(related_serializer_list) + '\n' if related_serializer_list else ''):
                 w.write(line + '\n')
             w.write('\n' + '\n')
 
@@ -93,9 +143,9 @@ def create_urls(app_views, file_path):
 
 
 def run():
-    from phin import models
-    create_serializers(models, 'phin/serializers.py')
-    from phin import serializers
-    create_viewsets(serializers, 'phin/views.py')
-    from phin import views
-    create_urls(views, 'phin/urls.py')
+    from chembl import models
+    create_serializers(models, 'chembl/new_serializers.py')
+    # from phin import serializers
+    # create_viewsets(serializers, 'phin/views.py')
+    # from phin import views
+    # create_urls(views, 'phin/urls.py')
