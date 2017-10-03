@@ -1,7 +1,7 @@
 from django.db.models import Count
 from rest_framework import generics, permissions
 from dynamic_rest import viewsets
-from . import models, new_serializers as serializers
+from . import models, serializers
 
 
 class ActionTypeViewSet(viewsets.DynamicModelViewSet):

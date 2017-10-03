@@ -11,18 +11,22 @@ def init_phin_molecule_tbl():
     with open('phin/scripts/log/rdkit-invalid-mol.txt', 'w') as w:
         mol_set = chembl_models.MoleculeDictionary.objects.all()
         for idx, mol in enumerate(mol_set.iterator()):
-            if mol.as_child_molecule.all():
+            # print mol.molregno
+            if hasattr(mol, 'as_child_molecule'):
                 # get parent molecule (rm salt)
-                mol = mol.as_child_molecule.all()[0].parent_molregno
-            if not mol.compoundstructures_set.all():
+                mol = mol.as_child_molecule.parent_molregno
+            #if not mol.compoundstructures:
+            if not hasattr(mol, 'compoundstructures'):
+                # no structure
                 w.write('\t'.join(['NS', str(idx), str(mol.molregno), '\n']))
                 continue
-            smiles = mol.compoundstructures_set.all()[0].canonical_smiles
+            smiles = mol.compoundstructures.canonical_smiles
             phin_mol, created = Molecule.objects.get_or_create(molregno=mol)
             try:
                 rdkit_mol = Chem.MolFromSmiles(smiles)
                 phin_mol.structure = rdkit_mol
             except:
+                # invalid molecular structure
                 w.write('\t'.join(['IM', str(idx), str(mol.molregno), smiles, '\n']))
             phin_mol.save()
 
@@ -69,10 +73,10 @@ def init_phin_activities_tbl():
                     target=target
                 )
 
-                activity.mean = row['pchembl_value'].mean()
+                activity.mean = round(row['pchembl_value'].mean(), 2)
                 activity.max = row['pchembl_value'].max()
                 activity.min = row['pchembl_value'].min()
-                activity.median = row['pchembl_value'].median()
+                activity.median = round(row['pchembl_value'].median(), 2)
                 activity.count = row['pchembl_value'].count()
                 activity.save()
 
@@ -109,8 +113,8 @@ def init_scaffold_activities_tbl():
                     scaffold_id=row['scaffold_id'],
                     min=row['min'],
                     max=row['max'],
-                    mean=row['mean'],
-                    median=row['median'],
+                    mean=round(row['mean'], 2),
+                    median=round(row['median'], 2),
                     count=row['count']
 
                 ) for idx, row in target._get_scaffold_activites().iterrows()
@@ -121,7 +125,8 @@ def init_scaffold_activities_tbl():
 def init_target_scaffold_interaction_tbl():
     # exclude uncheck chembl (chembl912545)
     # todo: exclude target with 0 valid scaffold activity
-    target_set = Target.objects.all().annotate(act_count=Count('scaffoldactivities')).filter(act_count__gt=0).order_by('-act_count')[1:]
+    target_set = Target.objects.all().annotate(act_count=Count('scaffoldactivities')).filter(act_count__gt=0).order_by(
+        '-act_count')[1:]
     for target1, target2 in it.combinations(target_set, 2):
         # print target1.target_id, target2.target_id
         if target1.tid_id > target2.tid_id:
@@ -139,3 +144,26 @@ def init_target_scaffold_interaction_tbl():
                 ) for idx, x in target1._get_common_scaffold_activities(target2).iterrows()
             ]
         )
+
+def run():
+
+    print 'init molecule table'
+    init_phin_molecule_tbl()
+
+    print 'init target table'
+    init_phin_target_tbl()
+
+    print 'init scaffold table'
+    init_scaffold_tbl()
+
+    print 'init phin activities table',
+    init_phin_activities_tbl()
+
+    print 'target interaction table'
+    init_target_interaction_tbl()
+
+    print 'scaffold activities table'
+    init_scaffold_activities_tbl()
+
+    print 'target scaffold interaction table'
+    init_target_scaffold_interaction_tbl()

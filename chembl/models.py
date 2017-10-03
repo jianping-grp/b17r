@@ -27,19 +27,21 @@ class Activities(models.Model):
     record = models.ForeignKey('CompoundRecords', models.DO_NOTHING)
     molregno = models.ForeignKey('MoleculeDictionary', models.DO_NOTHING, db_column='molregno', blank=True, null=True)
     standard_relation = models.CharField(max_length=50, blank=True, null=True)
-    published_value = models.DecimalField(max_digits=16, decimal_places=4, blank=True, null=True)
+    published_value = models.DecimalField(max_digits=65535, decimal_places=65535, blank=True, null=True)
     published_units = models.CharField(max_length=100, blank=True, null=True)
-    standard_value = models.DecimalField(max_digits=16, decimal_places=4, blank=True, null=True)
+    standard_value = models.DecimalField(max_digits=65535, decimal_places=65535, blank=True, null=True)
     standard_units = models.CharField(max_length=100, blank=True, null=True)
     standard_flag = models.SmallIntegerField(blank=True, null=True)
     standard_type = models.CharField(max_length=250, blank=True, null=True)
     activity_comment = models.CharField(max_length=4000, blank=True, null=True)
     published_type = models.CharField(max_length=250, blank=True, null=True)
-    data_validity_comment = models.ForeignKey('DataValidityLookup', models.DO_NOTHING, db_column='data_validity_comment', blank=True, null=True)
+    data_validity_comment = models.ForeignKey('DataValidityLookup', models.DO_NOTHING,
+                                              db_column='data_validity_comment', blank=True, null=True)
     potential_duplicate = models.SmallIntegerField(blank=True, null=True)
     published_relation = models.CharField(max_length=50, blank=True, null=True)
     pchembl_value = models.DecimalField(max_digits=4, decimal_places=2, blank=True, null=True)
-    bao_endpoint = models.ForeignKey('BioassayOntology', models.DO_NOTHING, db_column='bao_endpoint', blank=True, null=True)
+    bao_endpoint = models.ForeignKey('BioassayOntology', models.DO_NOTHING, db_column='bao_endpoint', blank=True,
+                                     null=True)
     uo_units = models.CharField(max_length=10, blank=True, null=True)
     qudt_units = models.CharField(max_length=70, blank=True, null=True)
 
@@ -97,8 +99,10 @@ class Assays(models.Model):
     assay_cell_type = models.CharField(max_length=100, blank=True, null=True)
     assay_subcellular_fraction = models.CharField(max_length=100, blank=True, null=True)
     tid = models.ForeignKey('TargetDictionary', models.DO_NOTHING, db_column='tid', blank=True, null=True)
-    relationship_type = models.ForeignKey('RelationshipType', models.DO_NOTHING, db_column='relationship_type', blank=True, null=True)
-    confidence_score = models.ForeignKey('ConfidenceScoreLookup', models.DO_NOTHING, db_column='confidence_score', blank=True, null=True)
+    relationship_type = models.ForeignKey('RelationshipType', models.DO_NOTHING, db_column='relationship_type',
+                                          blank=True, null=True)
+    confidence_score = models.ForeignKey('ConfidenceScoreLookup', models.DO_NOTHING, db_column='confidence_score',
+                                         blank=True, null=True)
     curated_by = models.ForeignKey('CurationLookup', models.DO_NOTHING, db_column='curated_by', blank=True, null=True)
     src = models.ForeignKey('Source', models.DO_NOTHING)
     src_assay_id = models.CharField(max_length=50, blank=True, null=True)
@@ -120,7 +124,6 @@ class AtcClassification(models.Model):
     level3 = models.CharField(max_length=10, blank=True, null=True)
     level4 = models.CharField(max_length=10, blank=True, null=True)
     level5 = models.CharField(primary_key=True, max_length=10)
-    who_id = models.CharField(max_length=15, blank=True, null=True)
     level1_description = models.CharField(max_length=150, blank=True, null=True)
     level2_description = models.CharField(max_length=150, blank=True, null=True)
     level3_description = models.CharField(max_length=150, blank=True, null=True)
@@ -379,9 +382,9 @@ class DataValidityLookup(models.Model):
 class DefinedDailyDose(models.Model):
     atc_code = models.ForeignKey(AtcClassification, models.DO_NOTHING, db_column='atc_code')
     ddd_value = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True)
-    ddd_units = models.CharField(max_length=20, blank=True, null=True)
-    ddd_admr = models.CharField(max_length=30, blank=True, null=True)
-    ddd_comment = models.CharField(max_length=400, blank=True, null=True)
+    ddd_units = models.CharField(max_length=200, blank=True, null=True)
+    ddd_admr = models.CharField(max_length=1000, blank=True, null=True)
+    ddd_comment = models.CharField(max_length=2000, blank=True, null=True)
     ddd_id = models.IntegerField(primary_key=True)
 
     class Meta:
@@ -398,7 +401,7 @@ class Docs(models.Model):
     first_page = models.CharField(max_length=50, blank=True, null=True)
     last_page = models.CharField(max_length=50, blank=True, null=True)
     pubmed_id = models.BigIntegerField(unique=True, blank=True, null=True)
-    doi = models.CharField(max_length=50, blank=True, null=True)
+    doi = models.CharField(max_length=100, blank=True, null=True)
     chembl = models.OneToOneField(ChemblIdLookup, models.DO_NOTHING, unique=True)
     title = models.CharField(max_length=500, blank=True, null=True)
     doc_type = models.CharField(max_length=50)
@@ -584,8 +587,7 @@ class Metabolism(models.Model):
     )
     substrate_record = models.ForeignKey(
         CompoundRecords,
-        models.DO_NOTHING,
-        blank=True, null=True,
+        models.DO_NOTHING, blank=True, null=True,
         related_name='substrate_compound'
     )
     metabolite_record = models.ForeignKey(
@@ -606,7 +608,9 @@ class Metabolism(models.Model):
     class Meta:
         managed = False
         db_table = 'metabolism'
-        unique_together = (('drug_record', 'substrate_record', 'metabolite_record', 'pathway_id', 'enzyme_name', 'enzyme_tid', 'tax_id'),)
+        unique_together = (
+            ('drug_record', 'substrate_record', 'metabolite_record', 'pathway_id', 'enzyme_name', 'enzyme_tid',
+             'tax_id'),)
 
 
 class MetabolismRefs(models.Model):
@@ -792,7 +796,8 @@ class ProductPatents(models.Model):
     patent_expire_date = models.DateField()
     drug_substance_flag = models.SmallIntegerField()
     drug_product_flag = models.SmallIntegerField()
-    patent_use_code = models.ForeignKey(PatentUseCodes, models.DO_NOTHING, db_column='patent_use_code', blank=True, null=True)
+    patent_use_code = models.ForeignKey(PatentUseCodes, models.DO_NOTHING, db_column='patent_use_code', blank=True,
+                                        null=True)
     delist_flag = models.SmallIntegerField()
 
     class Meta:
@@ -962,7 +967,6 @@ class TargetDictionary(models.Model):
     class Meta:
         managed = False
         db_table = 'target_dictionary'
-        ordering = ('tid',)
 
 
 class TargetRelations(models.Model):
