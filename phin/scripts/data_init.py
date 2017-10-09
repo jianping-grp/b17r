@@ -147,20 +147,20 @@ def init_target_scaffold_interaction_tbl():
 
 def run():
 
-    print 'init molecule table'
-    init_phin_molecule_tbl()
-
-    print 'init target table'
-    init_phin_target_tbl()
-
-    print 'init scaffold table'
-    init_scaffold_tbl()
-
-    print 'init phin activities table',
-    init_phin_activities_tbl()
-
-    print 'target interaction table'
-    init_target_interaction_tbl()
+    # print 'init molecule table'
+    # init_phin_molecule_tbl()
+    #
+    # print 'init target table'
+    # init_phin_target_tbl()
+    #
+    # print 'init scaffold table'
+    # init_scaffold_tbl()
+    #
+    # print 'init phin activities table',
+    # init_phin_activities_tbl()
+    #
+    # print 'target interaction table'
+    # init_target_interaction_tbl()
 
     print 'scaffold activities table'
     init_scaffold_activities_tbl()

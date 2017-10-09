@@ -1,3 +1,4 @@
+from rest_framework.fields import IntegerField
 
 from . import models
 from dynamic_rest import serializers
@@ -415,7 +416,7 @@ class MoleculeDictionarySerializer(serializers.DynamicModelSerializer):
     as_parent_molecule = serializers.DynamicRelationField('MoleculeHierarchySerializer', many=True, deferred=True)
     biotherapeutics = serializers.DynamicRelationField('BiotherapeuticsSerializer')
     chembl = serializers.DynamicRelationField('ChemblIdLookupSerializer')
-    chembl_molecule = serializers.DynamicRelationField('MoleculeSerializer')
+    # chembl_molecule = serializers.DynamicRelationField('MoleculeSerializer')
     compoundproperties = serializers.DynamicRelationField('CompoundPropertiesSerializer')
     compoundrecords_set = serializers.DynamicRelationField('CompoundRecordsSerializer', many=True, deferred=True)
     compoundstructuralalerts_set = serializers.DynamicRelationField('CompoundStructuralAlertsSerializer', many=True, deferred=True)
@@ -628,7 +629,7 @@ class TargetDictionarySerializer(serializers.DynamicModelSerializer):
     assays_set = serializers.DynamicRelationField('AssaysSerializer', many=True, deferred=True)
     bindingsites_set = serializers.DynamicRelationField('BindingSitesSerializer', many=True, deferred=True)
     chembl = serializers.DynamicRelationField('ChemblIdLookupSerializer')
-    chembl_target = serializers.DynamicRelationField('TargetSerializer')
+    #chembl_target = serializers.DynamicRelationField('TargetSerializer')
     drugmechanism_set = serializers.DynamicRelationField('DrugMechanismSerializer', many=True, deferred=True)
     metabolism_set = serializers.DynamicRelationField('MetabolismSerializer', many=True, deferred=True)
     related_target = serializers.DynamicRelationField('TargetRelationsSerializer', many=True, deferred=True)
@@ -636,6 +637,7 @@ class TargetDictionarySerializer(serializers.DynamicModelSerializer):
     target_type = serializers.DynamicRelationField('TargetTypeSerializer')
     targetcomponents_set = serializers.DynamicRelationField('TargetComponentsSerializer', many=True, deferred=True)
 
+    assays_count = IntegerField(read_only=True)
     class Meta:
         model = models.TargetDictionary
         exclude = []
