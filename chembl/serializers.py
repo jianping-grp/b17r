@@ -638,6 +638,7 @@ class TargetDictionarySerializer(serializers.DynamicModelSerializer):
     targetcomponents_set = serializers.DynamicRelationField('TargetComponentsSerializer', many=True, deferred=True)
 
     assays_count = IntegerField(read_only=True)
+    #activity_count = IntegerField(read_only=True)
     class Meta:
         model = models.TargetDictionary
         exclude = []
