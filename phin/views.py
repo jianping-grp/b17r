@@ -46,11 +46,10 @@ class TargetViewSet(viewsets.DynamicModelViewSet):
 
 # custom api
 @api_view(['GET'])
-def get_related_target(request, target_id):
-    print target_id
-    target = models.Target.objects.get(pk=target_id)
+def get_related_target(request, tid):
+    print tid
+    target = models.Target.objects.get(tid=tid)
     related_targets = target.get_target_interaction().to_dict(orient='records')
-
     #print related_targets
     return Response(related_targets)
 
