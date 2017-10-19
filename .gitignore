@@ -103,3 +103,5 @@ ENV/
 phin/scripts/log/
 
 .vscode/
+
+*.pyc

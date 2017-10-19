@@ -44,7 +44,7 @@ class Target(models.Model):
     def get_target_interaction(self, activity_type='mean'):
         with connection.cursor() as cursor:
             cursor.execute(TARGET_INTERACTION.format(activity_type, self.target_id))
-            data = pd.DataFrame(cursor.fetchall(), columns=['first_target', 'second_target', 'activity'])
+            data = pd.DataFrame(cursor.fetchall(), columns=['first_target', 'second_target', 'activity_list'])
             # print data
             return data
 
