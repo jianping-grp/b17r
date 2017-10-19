@@ -64,4 +64,5 @@ def get_related_target_list(request):
         data = pd.DataFrame(cursor.fetchall(), columns=['first_target', 'second_target', 'activity'])
         return Response(data.to_dict(orient='records'))
 
-
+class TargetNetworkViewSet(viewsets.DynamicModelViewSet):
+    
