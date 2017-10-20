@@ -1,9 +1,9 @@
-
 from rest_framework import generics, permissions
 from django.db import connection
 from dynamic_rest import viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
+from rest_framework.viewsets import ViewSet
 import pandas as pd
 from . import sql_helper
 from . import models, serializers
@@ -50,7 +50,7 @@ def get_related_target(request, tid):
     print tid
     target = models.Target.objects.get(tid=tid)
     related_targets = target.get_target_interaction().to_dict(orient='records')
-    #print related_targets
+    # print related_targets
     return Response(related_targets)
 
 
@@ -64,5 +64,10 @@ def get_related_target_list(request):
         data = pd.DataFrame(cursor.fetchall(), columns=['first_target', 'second_target', 'activity'])
         return Response(data.to_dict(orient='records'))
 
-class TargetNetworkViewSet(viewsets.DynamicModelViewSet):
-    
+
+class TargetNetworkViewSet(ViewSet):
+    def retrieve(self, request, tid=None):
+        target = models.Target.objects.get(tid=tid)
+        related_targets = target.get_target_interaction().to_dict(orient='records')
+        serializer = serializers.TargetNetworkSerializer(related_targets, many=True)
+        return Response(serializer.data)

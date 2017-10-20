@@ -85,7 +85,7 @@ WSGI_APPLICATION = 'chembl_explorer.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'chembl_22',
+        'NAME': 'chembl_23',
         'HOST': 'localhost',
         'PORT': 5432,
         'USER': 'jianping',

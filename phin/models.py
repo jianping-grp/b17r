@@ -44,12 +44,12 @@ class Target(models.Model):
     def get_target_interaction(self, activity_type='mean'):
         with connection.cursor() as cursor:
             cursor.execute(TARGET_INTERACTION.format(activity_type, self.target_id))
-            data = pd.DataFrame(cursor.fetchall(), columns=['first_target', 'second_target', 'activity_list'])
+            data = pd.DataFrame(cursor.fetchall(), columns=['pk', 'first_target', 'second_target', 'activity_list'])
             # print data
             return data
 
     def get_related_targets(self):
-        return TargetInteraction.objects.get_target_interaction(self.target_id)\
+        return TargetInteraction.objects.get_target_interaction(self.target_id) \
             .distinct().values('first_target', 'second_target')
 
     # related_targets = property(_get_related_targets)
@@ -115,6 +115,7 @@ class ScaffoldActivities(models.Model):
 
 
 class TargetInteractionManager(models.Manager):
+    # def get_target_interaction(self):
     def get_target_interaction(self, target_id):
         return super(TargetInteractionManager, self).get_queryset().filter(
             Q(first_target_id=target_id) | Q(second_target_id=target_id)

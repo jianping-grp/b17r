@@ -11,6 +11,7 @@ routers.register('scaffolds', views.ScaffoldViewSet)
 routers.register('target-interactions', views.TargetInteractionViewSet)
 routers.register('target-scaffold-interactions', views.TargetScaffoldInteractionViewSet)
 routers.register('targets', views.TargetViewSet)
+routers.register('target-network', views.TargetNetworkViewSet)
 
 urlpatterns = routers.urls
 urlpatterns += [

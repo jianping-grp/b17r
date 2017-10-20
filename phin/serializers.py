@@ -1,6 +1,6 @@
 
 from . import models
-from rest_framework.serializers import IntegerField, ListField
+from rest_framework.serializers import IntegerField, ListField, PrimaryKeyRelatedField
 from dynamic_rest import serializers
 from chembl import serializers as chembl_serializers
 
@@ -48,12 +48,17 @@ class TargetScaffoldInteractionSerializer(serializers.DynamicModelSerializer):
         exclude = []
 
 
-class TargetNetworkSerializer(serializers.DynamicModelSerializer):
-    activity_list = ListField(child=IntegerField(min_value=0, max_value=99))
+class TargetNetworkSerializer(serializers.DynamicEphemeralSerializer):
     class Meta:
-        model = models.TargetInteraction
-        include = [
-            'first_target', 
-            'second_target',
-            'activity_list'
-        ]
+        name = 'targetnetwork'
+    pk = PrimaryKeyRelatedField(read_only=True)
+    first_target = IntegerField()
+    second_target = IntegerField()
+    activity_list = ListField(child=IntegerField(min_value=0, max_value=99))
+
+    # class Meta:
+    #     include = [
+    #         'first_target',
+    #         'second_target',
+    #         'activity_list'
+    #     ]
