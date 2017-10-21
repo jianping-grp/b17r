@@ -416,7 +416,7 @@ class MoleculeDictionarySerializer(serializers.DynamicModelSerializer):
     as_parent_molecule = serializers.DynamicRelationField('MoleculeHierarchySerializer', many=True, deferred=True)
     biotherapeutics = serializers.DynamicRelationField('BiotherapeuticsSerializer')
     chembl = serializers.DynamicRelationField('ChemblIdLookupSerializer')
-    # chembl_molecule = serializers.DynamicRelationField('MoleculeSerializer')
+    phin_id = serializers.DynamicRelationField('phin.serializers.MoleculeSerializer', source='chembl_molecule')
     compoundproperties = serializers.DynamicRelationField('CompoundPropertiesSerializer')
     compoundrecords_set = serializers.DynamicRelationField('CompoundRecordsSerializer', many=True, deferred=True)
     compoundstructuralalerts_set = serializers.DynamicRelationField('CompoundStructuralAlertsSerializer', many=True, deferred=True)
@@ -638,6 +638,7 @@ class TargetDictionarySerializer(serializers.DynamicModelSerializer):
     targetcomponents_set = serializers.DynamicRelationField('TargetComponentsSerializer', many=True, deferred=True)
 
     assays_count = IntegerField(read_only=True)
+    phin_id = serializers.DynamicRelationField("phin.serializers.TargetSerializer", source='chembl_target')
     #activity_count = IntegerField(read_only=True)
     class Meta:
         model = models.TargetDictionary

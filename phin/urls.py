@@ -11,10 +11,14 @@ routers.register('scaffolds', views.ScaffoldViewSet)
 routers.register('target-interactions', views.TargetInteractionViewSet)
 routers.register('target-scaffold-interactions', views.TargetScaffoldInteractionViewSet)
 routers.register('targets', views.TargetViewSet)
-routers.register('target-network', views.TargetNetworkViewSet)
+# routers.register('target-network', views.TargetInteractionViewSet.as_view, base_name='target-network')
 
 urlpatterns = routers.urls
 urlpatterns += [
-    url(r'^related-targets/(?P<tid>[0-9]+)', views.get_related_target),
+    url(
+        r'^target-network/(?P<target_id>[0-9]+)',
+        views.TargetNetworkViewSet.as_view()
+    ),
+    url(r'^related-targets/(?P<target_id>[0-9]+)', views.get_related_target),
     url(r'^related-targets-list/', views.get_related_target_list)
 ]

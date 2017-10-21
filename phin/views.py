@@ -4,6 +4,7 @@ from dynamic_rest import viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.viewsets import ViewSet
+from rest_framework import generics
 import pandas as pd
 from . import sql_helper
 from . import models, serializers
@@ -46,9 +47,8 @@ class TargetViewSet(viewsets.DynamicModelViewSet):
 
 # custom api
 @api_view(['GET'])
-def get_related_target(request, tid):
-    print tid
-    target = models.Target.objects.get(tid=tid)
+def get_related_target(request, target_id):
+    target = models.Target.objects.get(target_id=target_id)
     related_targets = target.get_target_interaction().to_dict(orient='records')
     # print related_targets
     return Response(related_targets)
@@ -65,9 +65,16 @@ def get_related_target_list(request):
         return Response(data.to_dict(orient='records'))
 
 
-class TargetNetworkViewSet(ViewSet):
-    def retrieve(self, request, tid=None):
-        target = models.Target.objects.get(tid=tid)
-        related_targets = target.get_target_interaction().to_dict(orient='records')
-        serializer = serializers.TargetNetworkSerializer(related_targets, many=True)
+class TargetNetworkViewSet(generics.RetrieveAPIView):
+    queryset = models.TargetInteraction.objects.all()
+
+    def get(self, request, target_id, *args, **kwargs):
+        queryset = models.TargetInteraction.objects.get_target_interaction_agg(target_id)
+        serializer = serializers.TargetNetworkSerializer(queryset, many=True)
         return Response(serializer.data)
+
+    # def retrieve(self, request, tid=None):
+    #     target = models.Target.objects.get(tid=tid)
+    #     related_targets = target.get_target_interaction().to_dict(orient='records')
+    #     serializer = serializers.TargetNetworkSerializer(related_targets, many=True)
+    #     return Response(serializer.data)

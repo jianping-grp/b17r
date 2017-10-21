@@ -116,6 +116,9 @@ class ScaffoldActivities(models.Model):
 
 class TargetInteractionManager(models.Manager):
     # def get_target_interaction(self):
+    def get_target_interaction_agg(self, target_id):
+        return super(TargetInteractionManager, self).raw(TARGET_INTERACTION.format('mean', target_id))
+
     def get_target_interaction(self, target_id):
         return super(TargetInteractionManager, self).get_queryset().filter(
             Q(first_target_id=target_id) | Q(second_target_id=target_id)

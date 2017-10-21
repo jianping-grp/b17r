@@ -86,7 +86,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'chembl_23',
-        'HOST': 'localhost',
+        'HOST': '172.16.15.219',
         'PORT': 5432,
         'USER': 'jianping',
         'PASSWORD': 'nankai123456'
