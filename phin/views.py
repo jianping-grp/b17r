@@ -65,23 +65,24 @@ def get_related_target_list(request):
         return Response(data.to_dict(orient='records'))
 
 
-class TargetNetworkViewSet(ViewSet):
-    #queryset = models.TargetInteraction.objects.all()
+class TargetNetworkViewSet(generics.ListAPIView):
+    queryset = models.TargetInteraction.objects.all()
+    #serializer_class = serializers.TargetNetworkSerializer
 
-    def retrieve(self, request, target_id):
+    def list(self, request, target_id):
         #request.query_params.add('include[]', 'second_target.')
 
         queryset = models.TargetInteraction.objects.get_target_interaction_agg(target_id)
-        request_fields = {'first_target': {}}
         serializer = serializers.TargetNetworkSerializer(
             queryset, many=True
         )
         return Response(serializer.data)
 
 # class TargetNetworkViewSet(viewsets.WithDynamicViewSetMixin, TargetNetworkViewSetRaw):
-#
-#     def retrieve(self, request, target_id):
-#         return super(TargetNetworkViewSetRaw, self).retrieve(request, target_id)
+#     queryset = models.TargetInteraction.objects.all()
+#     serializer_class = serializers.TargetNetworkSerializer
+#     def list(self, request, target_id):
+#         return super(TargetNetworkViewSetRaw, self).list(request, target_id)
 
 
 

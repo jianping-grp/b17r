@@ -29,7 +29,7 @@ class ScaffoldActivitiesSerializer(serializers.DynamicModelSerializer):
 
 
 class TargetSerializer(serializers.DynamicModelSerializer):
-    tid = serializers.DynamicRelationField(chembl_serializers.TargetDictionarySerializer)
+    tid = serializers.DynamicRelationField(chembl_serializers.TargetDictionarySerializer, embed=True)
 
     class Meta:
         model = models.Target
@@ -52,10 +52,10 @@ class TargetNetworkSerializer(serializers.DynamicEphemeralSerializer):
     class Meta:
         name = 'target-network'
 
-    first_target = serializers.DynamicRelationField(TargetSerializer)
+    first_target = serializers.DynamicRelationField(TargetSerializer, embed=True)
     second_target = serializers.DynamicRelationField(TargetSerializer, embed=True)
     activity_list = ListField(child=FloatField(min_value=0, max_value=99))
-
+    #
     # def to_representation(self, instance):
     #
     #     context = dict()
