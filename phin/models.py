@@ -100,6 +100,7 @@ class Activities(models.Model):
     mean = models.FloatField(blank=True, null=True)
     median = models.FloatField(blank=True, null=True)
     count = models.IntegerField(blank=True, null=True)
+    # todo: activity type
 
 
 class ScaffoldActivities(models.Model):

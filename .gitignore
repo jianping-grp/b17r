@@ -99,9 +99,9 @@ ENV/
 
 # mypy
 .mypy_cache/
-.idea/
 phin/scripts/log/
 
 .vscode/
 
 *.pyc
+/.idea/
