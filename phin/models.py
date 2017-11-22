@@ -156,3 +156,14 @@ class TargetScaffoldInteraction(models.Model):
     max = models.FloatField(blank=True, null=True)
     mean = models.FloatField(blank=True, null=True)
     median = models.FloatField(blank=True, null=True)
+
+
+class MMP(models.Model):
+    target = models.ForeignKey(Target)
+    RHMol = models.ForeignKey(Molecule, related_name="right_hand_mol", db_index=True)
+    LHMol = models.ForeignKey(Molecule, related_name="left_hand_mol", db_index=True)
+    RHAct = models.FloatField()
+    LHAct = models.FloatField()
+    RHAssay = models.ForeignKey(chembl_models.Assays, related_name='right_hand_assay')
+    LHAssay = models.ForeignKey(chembl_models.Assays, related_name='left_hand_assay')
+    transform = models.CharField(max_length=2048)

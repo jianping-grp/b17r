@@ -86,7 +86,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'chembl_23',
-        'HOST': 'localhost',
+        'HOST': '172.16.15.219',
         'PORT': 5432,
         'USER': 'jianping',
         'PASSWORD': 'nankai123456'
@@ -133,14 +133,14 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 # Graphql integration
-INSTALLED_APPS += ('graphene_django', )
-GRAPHENE = {
-    'MIDDLEWARE': (
-        'graphene_django.debug.DjangoDebugMiddleware',
-    ),
-    'SCHEMA': 'chembl_explorer.schema.schema',
-    'SCHEMA_INDENT': 2
-}
+# INSTALLED_APPS += ('graphene_django', )
+# GRAPHENE = {
+#     'MIDDLEWARE': (
+#         'graphene_django.debug.DjangoDebugMiddleware',
+#     ),
+#     'SCHEMA': 'chembl_explorer.schema.schema',
+#     'SCHEMA_INDENT': 2
+# }
 
 # DRF
 REST_FRAMEWORK = {
