@@ -45,6 +45,10 @@ class TargetViewSet(viewsets.DynamicModelViewSet):
     serializer_class = serializers.TargetSerializer
 
 
+class MMPViewSet(viewsets.DynamicModelViewSet):
+    queryset = models.MMP.objects.all()
+    serializer_class = serializers.MMPSerializer
+
 # custom api
 @api_view(['GET'])
 def get_related_target(request, target_id):

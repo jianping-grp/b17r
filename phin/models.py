@@ -159,11 +159,12 @@ class TargetScaffoldInteraction(models.Model):
 
 
 class MMP(models.Model):
-    target = models.ForeignKey(Target)
-    RHMol = models.ForeignKey(Molecule, related_name="right_hand_mol", db_index=True)
-    LHMol = models.ForeignKey(Molecule, related_name="left_hand_mol", db_index=True)
+    target = models.ForeignKey(chembl_models.TargetDictionary, db_index=True)
+    RHMol = models.ForeignKey(chembl_models.MoleculeDictionary, related_name="right_hand_mol", db_index=True)
+    LHMol = models.ForeignKey(chembl_models.MoleculeDictionary, related_name="left_hand_mol", db_index=True)
     RHAct = models.FloatField()
     LHAct = models.FloatField()
-    RHAssay = models.ForeignKey(chembl_models.Assays, related_name='right_hand_assay')
-    LHAssay = models.ForeignKey(chembl_models.Assays, related_name='left_hand_assay')
+    RHAssay = models.ForeignKey(chembl_models.Assays, related_name='right_hand_assay', db_index=True)
+    LHAssay = models.ForeignKey(chembl_models.Assays, related_name='left_hand_assay', db_index=True)
     transform = models.CharField(max_length=2048)
+    core = models.CharField(max_length=2048)

@@ -420,7 +420,7 @@ class MoleculeDictionarySerializer(serializers.DynamicModelSerializer):
     compoundproperties = serializers.DynamicRelationField('CompoundPropertiesSerializer')
     compoundrecords_set = serializers.DynamicRelationField('CompoundRecordsSerializer', many=True, deferred=True)
     compoundstructuralalerts_set = serializers.DynamicRelationField('CompoundStructuralAlertsSerializer', many=True, deferred=True)
-    compoundstructures = serializers.DynamicRelationField('CompoundStructuresSerializer')
+    compoundstructures = serializers.DynamicRelationField('CompoundStructuresSerializer', embed=True, deferred=True)
     drugindication_set = serializers.DynamicRelationField('DrugIndicationSerializer', many=True, deferred=True)
     drugmechanism_set = serializers.DynamicRelationField('DrugMechanismSerializer', many=True, deferred=True)
     formulations_set = serializers.DynamicRelationField('FormulationsSerializer', many=True, deferred=True)

@@ -1,56 +1,59 @@
-from rdkit import Chem
-#from phin import models
-import psycopg2
-import pandas as pd
-
-conn = psycopg2.connect(
-    database='chembl_23',
-    user='zhonghua',
-    password='nankai'
-)
-cursor = conn.cursor()
-
-TARGET_PCHEMBL_ACTIVITIES = """
-SELECT 
-  target_dictionary.tid, 
-  assays.assay_id, 
-  activities.activity_id, 
-  molecule_dictionary.molregno, 
-  activities.standard_type, 
-  activities.pchembl_value, 
-  molecule_dictionary.max_phase, 
-  compound_structures.canonical_smiles
-FROM 
-  public.activities, 
-  public.assays, 
-  public.molecule_dictionary, 
-  public.target_dictionary, 
-  public.compound_structures, 
-  public.molecule_hierarchy
-WHERE 
-  activities.assay_id = assays.assay_id AND
-  molecule_dictionary.molregno = activities.molregno AND
-  molecule_dictionary.molregno = molecule_hierarchy.molregno AND
-  target_dictionary.tid = assays.tid AND
-  molecule_hierarchy.parent_molregno = compound_structures.molregno AND
-  activities.pchembl_value > 0 AND 
-  target_dictionary.tid = %s;
-"""
+import csv
+from phin import models
+from chembl import models as chembl_models
+from datetime import datetime
+import gzip
 
 
-def get_all_active_molecule(target_id):
-    cursor.execute(TARGET_PCHEMBL_ACTIVITIES, (target_id,))
-    activity_df = pd.DataFrame(
-        cursor.fetchall(),
-        columns=[
-            'tid', 'assay_id', 'activity_id',
-            'molregno', 'standard_type', 'pchembl_value', 'max_phase', 'canonical_smiles'
-        ]
-    )
-    print activity_df
-    gb = activity_df.groupby(['molregno', 'standard_type']).agg({'pchembl_value': 'mean'})
-    print gb
+def load_mmp():
+    mmp_data_file = '/home/zhonghua/Downloads/mmp/mmp-max-rm-missing-entityid.csv.gz'
+    log_file = 'mmp.log'
+    start_time = datetime.now()
+    mmp_list = []
+    for idx, row in enumerate(csv.DictReader(gzip.open(mmp_data_file))):
+        #print idx
+        if idx % 100000 == 0 and not idx == 0:
+            st = datetime.now()
+            print 'start loading ', idx
+            models.MMP.objects.bulk_create(mmp_list)
+            mmp_list = []
+            print 'finished ', idx, datetime.now() - st
 
+        tid = row['target_id']
+        molregno1 = row['mol1_parent_id']
+        molregno2 = row['mol2_parent_id']
+        smi1 = row['mol1_diff']
+        smi2 = row['mol2_diff']
+        act1 = row['mol1_pchembl_value']
+        act2 = row['mol2_pchembl_value']
+        assay_id1 = row['mol1_assay_id']
+        assay_id2 = row['mol2_assay_id']
+        core = row['Col0 (RDKit Mol)']
+        if act1 < act2:
+            mmp = models.MMP(
+                target_id=tid,
+                LHMol_id=molregno1,
+                RHMol_id=molregno2,
+                LHAct=act1,
+                RHAct=act2,
+                LHAssay_id=assay_id1,
+                RHAssay_id=assay_id2,
+                transform='{0}>>{1}'.format(smi1, smi2),
+                core=core
+            )
+        else:
+            mmp = models.MMP(
+                target_id=tid,
+                LHMol_id=molregno2,
+                RHMol_id=molregno1,
+                LHAct=act2,
+                RHAct=act1,
+                LHAssay_id=assay_id2,
+                RHAssay_id=assay_id1,
+                transform='{0}>>{1}'.format(smi2, smi1),
+                core=core
 
-
-get_all_active_molecule(1)
+            )
+        mmp_list.append(mmp)
+    models.MMP.objects.bulk_create(mmp_list)
+    print datetime.now() - start_time
