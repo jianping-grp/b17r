@@ -145,6 +145,7 @@ STATIC_URL = '/static/'
 # DRF
 REST_FRAMEWORK = {
     'PAGE_SIZE': 10,
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'DEFAULT_FILTER_BACKENDS': (
         'django_filters.rest_framework.DjangoFilterBackend',
     ),
@@ -165,5 +166,8 @@ DYNAMIC_REST = {
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
 
-
-
+# local settings
+try:
+    from local_settings import *
+except ImportError:
+    pass

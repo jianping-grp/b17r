@@ -49,9 +49,9 @@ class TargetScaffoldInteractionSerializer(serializers.DynamicModelSerializer):
 
 
 class TargetNetworkSerializer(serializers.DynamicEphemeralSerializer):
+
     class Meta:
         name = 'target-network'
-
     first_target = serializers.DynamicRelationField(TargetSerializer, embed=True)
     second_target = serializers.DynamicRelationField(TargetSerializer, embed=True)
     activity_list = ListField(child=FloatField(min_value=0, max_value=99))

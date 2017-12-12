@@ -2,7 +2,7 @@ from rest_framework import generics, permissions
 from django.db import connection
 from dynamic_rest import viewsets
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.viewsets import ViewSet
 from rest_framework import generics
 import pandas as pd
@@ -49,6 +49,7 @@ class MMPViewSet(viewsets.DynamicModelViewSet):
     queryset = models.MMP.objects.all()
     serializer_class = serializers.MMPSerializer
 
+
 # custom api
 @api_view(['GET'])
 def get_related_target(request, target_id):
@@ -59,6 +60,7 @@ def get_related_target(request, target_id):
 
 
 @api_view(['POST'])
+@permission_classes((permissions.AllowAny,))
 def get_related_target_list(request):
     target_id_list = request.POST['target-id-list']
     print target_id_list

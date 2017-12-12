@@ -1,4 +1,4 @@
-django
+django==1.11
 psycopg2
 django-filter
 django_graphiql
