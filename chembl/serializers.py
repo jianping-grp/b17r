@@ -429,6 +429,7 @@ class MoleculeDictionarySerializer(serializers.DynamicModelSerializer):
     moleculehracclassification_set = serializers.DynamicRelationField('MoleculeHracClassificationSerializer', many=True, deferred=True)
     moleculeiracclassification_set = serializers.DynamicRelationField('MoleculeIracClassificationSerializer', many=True, deferred=True)
     moleculesynonyms_set = serializers.DynamicRelationField('MoleculeSynonymsSerializer', many=True, deferred=True)
+    activities_count = IntegerField(read_only=True)
 
     class Meta:
         model = models.MoleculeDictionary

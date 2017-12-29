@@ -216,7 +216,9 @@ class MoleculeAtcClassificationViewSet(viewsets.DynamicModelViewSet):
 
 
 class MoleculeDictionaryViewSet(viewsets.DynamicModelViewSet):
-    queryset = models.MoleculeDictionary.objects.all()
+    queryset = models.MoleculeDictionary.objects.all().annotate(
+        activities_count=Count('activities')
+    )
     serializer_class = serializers.MoleculeDictionarySerializer
 
 
