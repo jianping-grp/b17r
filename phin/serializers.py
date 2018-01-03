@@ -19,10 +19,12 @@ class MoleculeSerializer(serializers.DynamicModelSerializer):
 class ScaffoldSerializer(serializers.DynamicModelSerializer):
     class Meta:
         model = models.Scaffold
-        exclude = []
+        exclude = ['ffp2', 'mfp2', 'structure', 'torsionbv', 'atompairbv']
 
 
 class ScaffoldActivitiesSerializer(serializers.DynamicModelSerializer):
+    target = serializers.DynamicRelationField('TargetSerializer', embed=True)
+    #Scaffold = serializers.DynamicRelationField(ScaffoldSerializer, embed=)
     class Meta:
         model = models.ScaffoldActivities
         exclude = []

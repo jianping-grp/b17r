@@ -125,6 +125,19 @@ class TargetInteractionManager(models.Manager):
             Q(first_target_id=target_id) | Q(second_target_id=target_id)
         )
 
+class MoleculeInteraction(models.Model):
+    """
+    first_molecule.molregno > second_molecule.molregno
+    """
+    moli_id = models.BigAutoField(primary_key=True, db_index=True)
+    first_molecule = models.ForeignKey(Molecule, related_name='as_first', db_index=True)
+    second_molecule = models.ForeignKey(Molecule, related_name='as_second', db_index=True)
+    target = models.ForeignKey(Target, db_index=True)
+    min = models.FloatField(blank=True, null=True)
+    max = models.FloatField(blank=True, null=True)
+    mean = models.FloatField(blank=True, null=True)
+    median = models.FloatField(blank=True, null=True)
+
 
 class TargetInteraction(models.Model):
     """

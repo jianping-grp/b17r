@@ -618,7 +618,7 @@ class StructuralAlertsSerializer(serializers.DynamicModelSerializer):
 
 
 class TargetComponentsSerializer(serializers.DynamicModelSerializer):
-    component = serializers.DynamicRelationField('ComponentSequencesSerializer')
+    component = serializers.DynamicRelationField('ComponentSequencesSerializer', embed=True)
     tid = serializers.DynamicRelationField('TargetDictionarySerializer')
 
     class Meta:
@@ -636,7 +636,10 @@ class TargetDictionarySerializer(serializers.DynamicModelSerializer):
     related_target = serializers.DynamicRelationField('TargetRelationsSerializer', many=True, deferred=True)
     target = serializers.DynamicRelationField('TargetRelationsSerializer', many=True, deferred=True)
     target_type = serializers.DynamicRelationField('TargetTypeSerializer')
-    targetcomponents_set = serializers.DynamicRelationField('TargetComponentsSerializer', many=True, deferred=True)
+    targetcomponents_set = serializers.DynamicRelationField(
+        'TargetComponentsSerializer',
+        many=True, deferred=True, embed=True
+    )
 
     assays_count = IntegerField(read_only=True)
     phin_id = serializers.DynamicRelationField("phin.serializers.TargetSerializer", source='chembl_target')

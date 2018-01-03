@@ -80,6 +80,12 @@ def init_phin_activities_tbl():
                 activity.count = row['pchembl_value'].count()
                 activity.save()
 
+def init_molecule_interaction_tbl():
+    mol_set = Molecule.objects.all().annotate(act_count=Count('activities')).order_by('-act_count')[1:]
+    for mol1, mol2 in it.combinations(mol_set, 2):
+        if mol1.molregno_id > mol2.molregno_id:
+            mol1, mol2 = mol2, mol1
+
 
 def init_target_interaction_tbl():
     # exclude uncheck chembl (chembl912545)
