@@ -39,6 +39,24 @@ TARGET_COMMON_ACTIVITY = """
       ;
 """
 
+# retrieve common activities of two molecule
+MOLECULE_COMMON_ACTIVITIES = """
+    SELECT 
+      act1.target_id,
+      least(act1.min, act2.min),
+      least(act1.max, act2.max),
+      least(act1.mean, act2.mean),
+      least(act1.median, act2.median)
+    FROM 
+      public.phin_activities as act1, 
+      public.phin_activities as act2
+    WHERE 
+      act1.target_id = act2.target_id
+    AND
+    act1.molecule_id = %s AND act2.molecule_id = %s
+      ;
+"""
+
 # retrieve all scaffold activities of the specified target
 TARGET_SCAFFOLD_ACTIVITIES = """
     SELECT 

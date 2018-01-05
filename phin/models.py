@@ -4,6 +4,7 @@ from chembl import models as chembl_models
 from django.db import models, connection
 from django.db.models import Q, Count
 from django_rdkit.models.fields import MolField, BfpField
+from django.contrib.postgres.fields import ArrayField
 from sql_helper import *
 import pandas as pd
 
@@ -32,6 +33,16 @@ class Molecule(models.Model):
     mfp2 = BfpField(null=True)
     ffp2 = BfpField(null=True)
     # todo add fp index
+
+    def get_common_activities(self, other_molecule_id):
+        """
+        :return:
+        """
+
+        with connection.cursor() as cursor:
+            cursor.execute(MOLECULE_COMMON_ACTIVITIES, (self.mol_id, other_molecule_id))
+            rows = cursor.fetchall()
+        return pd.DataFrame(rows, columns=['target_id', 'min', 'max', 'mean', 'median'])
 
 
 class Target(models.Model):
@@ -132,11 +143,11 @@ class MoleculeInteraction(models.Model):
     moli_id = models.BigAutoField(primary_key=True, db_index=True)
     first_molecule = models.ForeignKey(Molecule, related_name='as_first', db_index=True)
     second_molecule = models.ForeignKey(Molecule, related_name='as_second', db_index=True)
-    target = models.ForeignKey(Target, db_index=True)
-    min = models.FloatField(blank=True, null=True)
-    max = models.FloatField(blank=True, null=True)
-    mean = models.FloatField(blank=True, null=True)
-    median = models.FloatField(blank=True, null=True)
+    target = ArrayField(models.BigIntegerField(), blank=True, null=True)
+    min = ArrayField(models.FloatField(), blank=True, null=True)
+    max = ArrayField(models.FloatField(), blank=True, null=True)
+    mean = ArrayField(models.FloatField(), blank=True, null=True)
+    median = ArrayField(models.FloatField(), blank=True, null=True)
 
 
 class TargetInteraction(models.Model):

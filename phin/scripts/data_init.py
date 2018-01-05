@@ -4,6 +4,7 @@ from rdkit import Chem
 from rdkit.Chem.Scaffolds import MurckoScaffold
 from django_rdkit.models import *
 import itertools as it
+from django.db import connection
 
 
 def init_phin_molecule_tbl():
@@ -15,7 +16,7 @@ def init_phin_molecule_tbl():
             if hasattr(mol, 'as_child_molecule'):
                 # get parent molecule (rm salt)
                 mol = mol.as_child_molecule.parent_molregno
-            #if not mol.compoundstructures:
+            # if not mol.compoundstructures:
             if not hasattr(mol, 'compoundstructures'):
                 # no structure
                 w.write('\t'.join(['NS', str(idx), str(mol.molregno), '\n']))
@@ -80,11 +81,95 @@ def init_phin_activities_tbl():
                 activity.count = row['pchembl_value'].count()
                 activity.save()
 
+
 def init_molecule_interaction_tbl():
-    mol_set = Molecule.objects.all().annotate(act_count=Count('activities')).order_by('-act_count')[1:]
-    for mol1, mol2 in it.combinations(mol_set, 2):
-        if mol1.molregno_id > mol2.molregno_id:
-            mol1, mol2 = mol2, mol1
+    sql = '''
+    SELECT 
+      phin_molecule.mol_id,
+      count(phin_activities.act_id) as activity_count
+    FROM 
+      public.phin_molecule, 
+      public.phin_activities
+    WHERE 
+      phin_activities.molecule_id = phin_molecule.mol_id AND
+      phin_activities.mean >= 5 
+    GROUP BY phin_molecule.mol_id
+    ORDER BY activity_count DESC
+    '''
+    with connection.cursor() as cursor:
+        cursor.execute(sql)
+        # get molecules that number of activities gte 5.
+        data = map(lambda x: x[0], filter(lambda x: x[1] >= 5, cursor.fetchall()))
+        for molid_1, molid_2 in it.combinations(data, 2):
+            if molid_1 > molid_2:
+                molid_1, molid_2 = molid_2, molid_1
+            mol1 = Molecule.objects.get(pk=molid_1)
+            comm_act = mol1.get_common_activities(molid_2)
+            if len(comm_act) > 0:
+                MoleculeInteraction.objects.create(
+                    first_molecule_id=molid_1,
+                    second_molecule_id=molid_2,
+                    target=list(comm_act['target_id']),
+                    min=list(comm_act['min']),
+                    max=list(comm_act['max']),
+                    mean=list(comm_act['mean']),
+                    median=list(comm_act['median'])
+                )
+            # MoleculeInteraction.objects.bulk_create(
+            #     MoleculeInteraction(
+            #         first_molecule_id=molid_1,
+            #         second_molecule_id=molid_2,
+            #         target_id=x['target_id'],
+            #         min=x['min'],
+            #         max=x['max'],
+            #         mean=x['mean'],
+            #         median=x['median']
+            #     ) for idx, x in mol1.get_common_activities(molid_2).iterrows()
+            # )
+
+    # for target in Target.objects.all():
+    #     print target.target_id
+    #     if target.tid.target_type_id in ['ADMET', 'NO TARGET', 'UNCHECKED', 'UNDEFINED', 'UNKNOWN']:
+    #         continue
+    #     for act1, act2 in it.combinations(target.activities_set.filter(mean__gte=5).all(), 2):
+    #         if act1.molecule_id > act2.molecule_id:
+    #             act1, act2 = act2, act1
+    #             # act_list.append((act2, act1))
+    #         try:
+    #             mi = MoleculeInteraction.objects.get(
+    #                 first_molecule_id=act1.molecule_id,
+    #                 second_molecule_id=act2.molecule_id
+    #             )
+    #             mi.target.append(target.target_id)
+    #             mi.min.append(min(act1.min, act2.min))
+    #             mi.max.append(min(act1.max, act2.max))
+    #             mi.mean.append(min(act1.mean, act2.mean))
+    #             mi.median.append(min(act1.median, act2.median))
+    #         except MoleculeInteraction.DoesNotExist:
+    #             mi = MoleculeInteraction.objects.create(
+    #                 first_molecule_id=act1.molecule_id,
+    #                 second_molecule_id=act2.molecule_id,
+    #                 target=[target.target_id],
+    #                 min=[min(act1.min, act2.min)],
+    #                 max=[min(act1.max, act2.max)],
+    #                 mean=[min(act1.mean, act2.mean)],
+    #                 median=[min(act1.median, act2.median)]
+    #             )
+    #         mi.save()
+
+    # MoleculeInteraction.objects.bulk_create(
+    #     [
+    #         MoleculeInteraction(
+    #             first_molecule_id=x1.molecule_id,
+    #             second_molecule_id=x2.molecule_id,
+    #             target_id=target.target_id,
+    #             min=min(x1.min, x2.min),
+    #             max=min(x1.max, x2.max),
+    #             mean=min(x1.mean, x2.mean),
+    #             median=min(x1.median, x2.median)
+    #         ) for x1, x2 in act_list
+    #     ]
+    # )
 
 
 def init_target_interaction_tbl():
@@ -151,8 +236,8 @@ def init_target_scaffold_interaction_tbl():
             ]
         )
 
-def run():
 
+def run():
     # print 'init molecule table'
     # init_phin_molecule_tbl()
     #
