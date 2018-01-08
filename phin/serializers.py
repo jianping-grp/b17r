@@ -13,7 +13,7 @@ class ActivitiesSerializer(serializers.DynamicModelSerializer):
 class MoleculeSerializer(serializers.DynamicModelSerializer):
     class Meta:
         model = models.Molecule
-        exclude = []
+        exclude = ['ffp2', 'mfp2', 'structure', 'torsionbv', 'atompairbv']
 
 
 class ScaffoldSerializer(serializers.DynamicModelSerializer):

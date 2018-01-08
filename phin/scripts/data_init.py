@@ -91,21 +91,20 @@ def init_molecule_interaction_tbl():
       public.phin_molecule, 
       public.phin_activities
     WHERE 
-      phin_activities.molecule_id = phin_molecule.mol_id AND
-      phin_activities.mean >= 5 
+      phin_activities.molecule_id = phin_molecule.mol_id
     GROUP BY phin_molecule.mol_id
     ORDER BY activity_count DESC
     '''
     with connection.cursor() as cursor:
         cursor.execute(sql)
-        # get molecules that number of activities gte 5.
-        data = map(lambda x: x[0], filter(lambda x: x[1] >= 5, cursor.fetchall()))
+        # get molecules that number of activities gte 10.
+        data = map(lambda x: x[0], filter(lambda x: x[1] >= 10, cursor.fetchall()))
         for molid_1, molid_2 in it.combinations(data, 2):
             if molid_1 > molid_2:
                 molid_1, molid_2 = molid_2, molid_1
             mol1 = Molecule.objects.get(pk=molid_1)
             comm_act = mol1.get_common_activities(molid_2)
-            if len(comm_act) > 0:
+            if len(comm_act) >= 5:
                 MoleculeInteraction.objects.create(
                     first_molecule_id=molid_1,
                     second_molecule_id=molid_2,

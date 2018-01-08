@@ -3,23 +3,53 @@ from __future__ import unicode_literals
 from chembl import models as chembl_models
 from django.db import models, connection
 from django.db.models import Q, Count
-from django_rdkit.models.fields import MolField, BfpField
 from django.contrib.postgres.fields import ArrayField
+from django_rdkit.models import *
+from django_rdkit.models.fields import MolField, BfpField
+from django_rdkit.config import config as django_rdk_conf
 from sql_helper import *
 import pandas as pd
 
 
+class ScaffoldManager(models.Manager):
+
+    def structure_search(self, smiles, similarity):
+        search_mfp2 = MORGANBV_FP(Value(smiles))
+        django_rdk_conf.tanimoto_threshold = similarity
+        queryset = super(ScaffoldManager, self).get_queryset().filter(mfp2__tanimoto=search_mfp2)
+        queryset = queryset.annotate(similarity=TANIMOTO_SML('mfp2', search_mfp2))
+        queryset = queryset.order_by('-similarity')
+        return queryset
+
+
+class MoleculeManager(models.Manager):
+
+    def structure_search(self, smiles, similarity):
+        search_mfp2 = MORGANBV_FP(Value(smiles))
+        django_rdk_conf.tanimoto_threshold = similarity
+        queryset = super(MoleculeManager, self).get_queryset().filter(mfp2__tanimoto=search_mfp2)
+        queryset = queryset.annotate(similarity=TANIMOTO_SML('mfp2', search_mfp2))
+        queryset = queryset.order_by('-similarity')
+        return queryset
+
+
 class Scaffold(models.Model):
+
+    objects = ScaffoldManager()
+
     scaffold_id = models.BigAutoField(primary_key=True)
     structure = MolField(null=True, blank=True)
     smiles = models.CharField(max_length=4000, blank=True, null=True)
     torsionbv = BfpField(null=True)
     atompairbv = BfpField(null=True)
-    mfp2 = BfpField(null=True)
+    mfp2 = BfpField(null=True, db_index=True)
     ffp2 = BfpField(null=True)
 
 
 class Molecule(models.Model):
+
+    objects = MoleculeManager()
+
     # only parent molecule of ChEMBL used here
     mol_id = models.BigAutoField(primary_key=True)
     molregno = models.OneToOneField(
@@ -30,7 +60,7 @@ class Molecule(models.Model):
     structure = MolField(null=True, blank=True)
     torsionbv = BfpField(null=True)
     atompairbv = BfpField(null=True)
-    mfp2 = BfpField(null=True)
+    mfp2 = BfpField(null=True, db_index=True)
     ffp2 = BfpField(null=True)
     # todo add fp index
 

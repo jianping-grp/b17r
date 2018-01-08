@@ -2,9 +2,10 @@ from rest_framework import generics, permissions
 from django.db import connection
 from dynamic_rest import viewsets
 from rest_framework.response import Response
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, detail_route, list_route
 from rest_framework.viewsets import ViewSet
 from rest_framework import generics
+from django_rdkit.models import *
 import pandas as pd
 from . import sql_helper
 from . import models, serializers
@@ -19,6 +20,32 @@ class MoleculeViewSet(viewsets.DynamicModelViewSet):
     queryset = models.Molecule.objects.all()
     serializer_class = serializers.MoleculeSerializer
 
+    @list_route(methods=['POST', 'GET'], permission_classes=[permissions.AllowAny])
+    def search(self, request):
+        smiles = str(request.data['smiles'])
+        similarity = float(request.data['similarity'])
+        search_type = str(request.data['search type'])
+        # perform substructure
+        print smiles, similarity, search_type
+        result = {}
+        if search_type == 'substructure':
+            result = models.Molecule.objects.filter(structure__hassubstruct=QMOL(Value(smiles))).all()
+        # structure search
+        else:
+            try:
+                result = models.Molecule.objects.structure_search(smiles, similarity)
+            except:
+                print 'structure search error'
+        if result:
+            page = self.paginate_queryset(result)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+            serializer = self.get_serializer(result, many=True)
+            return Response(serializer.data)
+
+        return Response(result)
+
 
 class ScaffoldActivitiesViewSet(viewsets.DynamicModelViewSet):
     queryset = models.ScaffoldActivities.objects.all()
@@ -28,6 +55,32 @@ class ScaffoldActivitiesViewSet(viewsets.DynamicModelViewSet):
 class ScaffoldViewSet(viewsets.DynamicModelViewSet):
     queryset = models.Scaffold.objects.all()
     serializer_class = serializers.ScaffoldSerializer
+
+    @list_route(methods=['POST', 'GET'], permission_classes=[permissions.AllowAny])
+    def search(self, request):
+        smiles = str(request.data['smiles'])
+        similarity = float(request.data['similarity'])
+        search_type = str(request.data['search type'])
+        # perform substructure
+        print smiles, similarity, search_type
+        result = {}
+        if search_type == 'substructure':
+            result = models.Scaffold.objects.filter(structure__hassubstruct=QMOL(Value(smiles))).all()
+        # scaffold search
+        else:
+            try:
+                result = models.Scaffold.objects.structure_search(smiles, similarity)
+            except:
+                print 'structure search error'
+        if result:
+            page = self.paginate_queryset(result)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+            serializer = self.get_serializer(result, many=True)
+            return Response(serializer.data)
+
+        return Response(result)
 
 
 class TargetInteractionViewSet(viewsets.DynamicModelViewSet):
@@ -73,10 +126,11 @@ def get_related_target_list(request):
 
 class TargetNetworkViewSet(generics.ListAPIView):
     queryset = models.TargetInteraction.objects.all()
-    #serializer_class = serializers.TargetNetworkSerializer
+
+    # serializer_class = serializers.TargetNetworkSerializer
 
     def list(self, request, target_id):
-        #request.query_params.add('include[]', 'second_target.')
+        # request.query_params.add('include[]', 'second_target.')
 
         queryset = models.TargetInteraction.objects.get_target_interaction_agg(target_id)
         serializer = serializers.TargetNetworkSerializer(
@@ -91,9 +145,8 @@ class TargetNetworkViewSet(generics.ListAPIView):
 #         return super(TargetNetworkViewSetRaw, self).list(request, target_id)
 
 
-
-    # def retrieve(self, request, tid=None):
-    #     target = models.Target.objects.get(tid=tid)
-    #     related_targets = target.get_target_interaction().to_dict(orient='records')
-    #     serializer = serializers.TargetNetworkSerializer(related_targets, many=True)
-    #     return Response(serializer.data)
+# def retrieve(self, request, tid=None):
+#     target = models.Target.objects.get(tid=tid)
+#     related_targets = target.get_target_interaction().to_dict(orient='records')
+#     serializer = serializers.TargetNetworkSerializer(related_targets, many=True)
+#     return Response(serializer.data)
