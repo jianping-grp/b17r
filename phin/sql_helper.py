@@ -116,3 +116,21 @@ from phin_targetinteraction
 where first_target_id in {1} or second_target_id in {1}
 group by first_target_id, second_target_id
 """
+
+# target interaction
+# specify activity_type 'mean', 'min', 'max' or 'median'
+TARGET_SCAFFOLD_INTERACTION = """
+select min(ti_id) as ti_id, first_target_id, second_target_id, json_agg({0}) as activity_list
+from phin_targetscaffoldinteraction
+where first_target_id={1} or second_target_id={1}
+group by first_target_id, second_target_id;
+"""
+
+# get target interaction by specify target list
+# specify activity_type 'mean', 'min', 'max' or 'median'
+TARGET_SCAFFOLD_INTERACTION_LIST = """
+select first_target_id, second_target_id, json_agg({0})
+from phin_targetscaffoldinteraction
+where first_target_id in {1} or second_target_id in {1}
+group by first_target_id, second_target_id
+"""

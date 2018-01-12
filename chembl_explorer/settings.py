@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'djoser',
     'django_rdkit',
+    'mptt',
     'chembl',
     'phin'
 ]

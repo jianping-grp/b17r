@@ -183,6 +183,11 @@ class ComponentSequencesSerializer(serializers.DynamicModelSerializer):
     componentsynonyms_set = serializers.DynamicRelationField('ComponentSynonymsSerializer', many=True, deferred=True)
     sitecomponents_set = serializers.DynamicRelationField('SiteComponentsSerializer', many=True, deferred=True)
     targetcomponents_set = serializers.DynamicRelationField('TargetComponentsSerializer', many=True, deferred=True)
+    keggdisease_set = serializers.DynamicRelationField(
+        "phin.serializers.KEGGDiseaseSerializer",
+        many=True
+    )
+
 
     class Meta:
         model = models.ComponentSequences

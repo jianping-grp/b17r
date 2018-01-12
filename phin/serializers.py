@@ -17,6 +17,8 @@ class MoleculeSerializer(serializers.DynamicModelSerializer):
 
 
 class ScaffoldSerializer(serializers.DynamicModelSerializer):
+    molecule_set = serializers.DynamicRelationField('MoleculeSerializer', many=True)
+
     class Meta:
         model = models.Scaffold
         exclude = ['ffp2', 'mfp2', 'structure', 'torsionbv', 'atompairbv']
@@ -24,7 +26,8 @@ class ScaffoldSerializer(serializers.DynamicModelSerializer):
 
 class ScaffoldActivitiesSerializer(serializers.DynamicModelSerializer):
     target = serializers.DynamicRelationField('TargetSerializer', embed=True)
-    #Scaffold = serializers.DynamicRelationField(ScaffoldSerializer, embed=)
+
+    # Scaffold = serializers.DynamicRelationField(ScaffoldSerializer, embed=)
     class Meta:
         model = models.ScaffoldActivities
         exclude = []
@@ -51,9 +54,18 @@ class TargetScaffoldInteractionSerializer(serializers.DynamicModelSerializer):
 
 
 class TargetNetworkSerializer(serializers.DynamicEphemeralSerializer):
-
     class Meta:
         name = 'target-network'
+
+    first_target = serializers.DynamicRelationField(TargetSerializer, embed=True)
+    second_target = serializers.DynamicRelationField(TargetSerializer, embed=True)
+    activity_list = ListField(child=FloatField(min_value=0, max_value=99))
+
+
+class TargetScaffoldNetworkSerializer(serializers.DynamicEphemeralSerializer):
+    class Meta:
+        name = 'target-scaffold-network'
+
     first_target = serializers.DynamicRelationField(TargetSerializer, embed=True)
     second_target = serializers.DynamicRelationField(TargetSerializer, embed=True)
     activity_list = ListField(child=FloatField(min_value=0, max_value=99))
@@ -65,6 +77,25 @@ class MMPSerializer(serializers.DynamicModelSerializer):
     LHAssay = serializers.DynamicRelationField(chembl_serializers.AssaysSerializer)
     RHMol = serializers.DynamicRelationField(chembl_serializers.MoleculeDictionarySerializer)
     LHMol = serializers.DynamicRelationField(chembl_serializers.MoleculeDictionarySerializer)
+
     class Meta:
         model = models.MMP
+        exclude = []
+
+
+class KEGGDiseaseClassSerializer(serializers.DynamicModelSerializer):
+    parent = serializers.DynamicRelationField('KEGGDiseaseClassSerializer')
+    mapping_counts = IntegerField(read_only=True)
+
+    class Meta:
+        model = models.KEGGDiseaseClass
+        exclude = []
+
+
+class KEGGDiseaseSerializer(serializers.DynamicModelSerializer):
+    kegg_class = serializers.DynamicRelationField(KEGGDiseaseClassSerializer)
+    chembl_mappings = serializers.DynamicRelationField(chembl_serializers.ComponentSequencesSerializer, many=True)
+
+    class Meta:
+        model = models.KEGGDisease
         exclude = []

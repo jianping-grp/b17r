@@ -83,6 +83,7 @@ def init_phin_activities_tbl():
 
 
 def init_molecule_interaction_tbl():
+    # todo: exclude targets of admet, unchecked etc.
     sql = '''
     SELECT 
       phin_molecule.mol_id,
@@ -234,6 +235,44 @@ def init_target_scaffold_interaction_tbl():
                 ) for idx, x in target1._get_common_scaffold_activities(target2).iterrows()
             ]
         )
+
+
+def kegg_disease_class_tbl():
+    import kegg
+    json_file = 'phin/scripts/br08403.json'
+    for elements in kegg.parse_ds_json(json_file):
+        print elements
+        if len(elements) == 2:
+            kegg_id, kegg_name = elements
+            disease_class, created = KEGGDiseaseClass.objects.get_or_create(kegg_id=kegg_id)
+            disease_class.name = kegg_name
+
+        elif len(elements) == 3:
+            kegg_id, kegg_name, parent_id = elements
+            parent, created = KEGGDiseaseClass.objects.get_or_create(kegg_id=parent_id)
+            disease_class, created = KEGGDiseaseClass.objects.get_or_create(kegg_id=kegg_id)
+            disease_class.parent = parent
+            disease_class.name = kegg_name
+        disease_class.save()
+
+def kegg_disease_tbl():
+    disease_uniprot_file = 'phin/scripts/disease-uniprot.csv'
+    for row in open(disease_uniprot_file):
+        cell_list = row.strip().split(',')
+        if len(cell_list) >= 2:
+            kegg_id = cell_list[0]
+            print kegg_id
+            kegg_disease_class = KEGGDiseaseClass.objects.get(kegg_id=kegg_id)
+            kegg_disease, created = KEGGDisease.objects.get_or_create(kegg_id=kegg_id)
+            kegg_disease.kegg_class = kegg_disease_class
+            kegg_disease.all_gene_accessions = cell_list[1:]
+            for el in cell_list[1:]:
+                try:
+                    chembl_seq = chembl_models.ComponentSequences.objects.get(accession=el)
+                    kegg_disease.chembl_mappings.add(chembl_seq)
+                except chembl_models.ComponentSequences.DoesNotExist:
+                    continue
+            kegg_disease.save()
 
 
 def run():

@@ -9,6 +9,7 @@ from django_rdkit.models.fields import MolField, BfpField
 from django_rdkit.config import config as django_rdk_conf
 from sql_helper import *
 import pandas as pd
+from mptt.models import MPTTModel, TreeForeignKey
 
 
 class ScaffoldManager(models.Manager):
@@ -33,8 +34,29 @@ class MoleculeManager(models.Manager):
         return queryset
 
 
-class Scaffold(models.Model):
+class TargetInteractionManager(models.Manager):
+    # def get_target_interaction(self):
+    def get_target_interaction_agg(self, target_id):
+        return super(TargetInteractionManager, self).raw(TARGET_INTERACTION.format('mean', target_id))
 
+    def get_target_interaction(self, target_id):
+        return super(TargetInteractionManager, self).get_queryset().filter(
+            Q(first_target_id=target_id) | Q(second_target_id=target_id)
+        )
+
+
+class TargetScaffoldInteractionManager(models.Manager):
+    # def get_target_interaction(self):
+    def get_target_interaction_agg(self, target_id):
+        return super(TargetScaffoldInteractionManager, self).raw(TARGET_INTERACTION.format('mean', target_id))
+
+    def get_target_interaction(self, target_id):
+        return super(TargetScaffoldInteractionManager, self).get_queryset().filter(
+            Q(first_target_id=target_id) | Q(second_target_id=target_id)
+        )
+
+
+class Scaffold(models.Model):
     objects = ScaffoldManager()
 
     scaffold_id = models.BigAutoField(primary_key=True)
@@ -47,7 +69,6 @@ class Scaffold(models.Model):
 
 
 class Molecule(models.Model):
-
     objects = MoleculeManager()
 
     # only parent molecule of ChEMBL used here
@@ -62,6 +83,7 @@ class Molecule(models.Model):
     atompairbv = BfpField(null=True)
     mfp2 = BfpField(null=True, db_index=True)
     ffp2 = BfpField(null=True)
+
     # todo add fp index
 
     def get_common_activities(self, other_molecule_id):
@@ -156,16 +178,6 @@ class ScaffoldActivities(models.Model):
     count = models.IntegerField(blank=True, null=True)
 
 
-class TargetInteractionManager(models.Manager):
-    # def get_target_interaction(self):
-    def get_target_interaction_agg(self, target_id):
-        return super(TargetInteractionManager, self).raw(TARGET_INTERACTION.format('mean', target_id))
-
-    def get_target_interaction(self, target_id):
-        return super(TargetInteractionManager, self).get_queryset().filter(
-            Q(first_target_id=target_id) | Q(second_target_id=target_id)
-        )
-
 class MoleculeInteraction(models.Model):
     """
     first_molecule.molregno > second_molecule.molregno
@@ -201,6 +213,8 @@ class TargetScaffoldInteraction(models.Model):
     """
     first_target.tid_id > second_target.tid_id
     """
+    objects = TargetScaffoldInteractionManager()
+
     ti_id = models.BigAutoField(primary_key=True, db_index=True)
     first_target = models.ForeignKey(Target, related_name='as_scaffold_first', db_index=True)
     second_target = models.ForeignKey(Target, related_name='as_scaffold_second', db_index=True)
@@ -222,3 +236,16 @@ class MMP(models.Model):
     LHAssay = models.ForeignKey(chembl_models.Assays, related_name='left_hand_assay', db_index=True)
     transform = models.CharField(max_length=2048)
     core = models.CharField(max_length=2048)
+
+
+class KEGGDiseaseClass(MPTTModel):
+    kegg_id = models.CharField(max_length=64)
+    name = models.CharField(max_length=256)
+    parent = TreeForeignKey('self', null=True, blank=True, related_name='children', db_index=True)
+
+
+class KEGGDisease(models.Model):
+    kegg_class = models.ForeignKey(KEGGDiseaseClass, null=True)
+    kegg_id = models.CharField(max_length=64, unique=True)
+    all_gene_accessions = ArrayField(models.CharField(max_length=32), blank=True, null=True)
+    chembl_mappings = models.ManyToManyField(chembl_models.ComponentSequences)

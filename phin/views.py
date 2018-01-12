@@ -103,6 +103,25 @@ class MMPViewSet(viewsets.DynamicModelViewSet):
     serializer_class = serializers.MMPSerializer
 
 
+class KEGGDiseaseClassViewSet(viewsets.DynamicModelViewSet):
+    # queryset = models.KEGGDiseaseClass.objects.all().annotate(
+    #     targets_count=Count('get')
+    # )
+    queryset = models.KEGGDiseaseClass.objects.add_related_count(
+        models.KEGGDiseaseClass.objects.all(),
+        models.KEGGDisease,
+        'kegg_class',
+        'mapping_counts',
+        cumulative=True
+    )
+    serializer_class = serializers.KEGGDiseaseClassSerializer
+
+
+class KEGGDiseaseViewSet(viewsets.DynamicModelViewSet):
+    queryset = models.KEGGDisease.objects.all()
+    serializer_class = serializers.KEGGDiseaseSerializer
+
+
 # custom api
 @api_view(['GET'])
 def get_related_target(request, target_id):
@@ -124,15 +143,32 @@ def get_related_target_list(request):
         return Response(data.to_dict(orient='records'))
 
 
+class TargetScaffoldNetworkViewSet(generics.ListAPIView):
+    queryset = models.TargetScaffoldInteraction.objects.all()
+
+    # serializer_class = serializers.TargetNetworkSerializer
+
+    def list(self, request, tid):
+        # request.query_params.add('include[]', 'second_target.')
+        target = models.Target.objects.get(tid_id=tid)
+        queryset = models.TargetScaffoldInteraction.objects.get_target_interaction_agg(target.target_id)
+        serializer = serializers.TargetScaffoldNetworkSerializer(
+            queryset, many=True
+        )
+        return Response(serializer.data)
+
+
 class TargetNetworkViewSet(generics.ListAPIView):
     queryset = models.TargetInteraction.objects.all()
 
     # serializer_class = serializers.TargetNetworkSerializer
 
-    def list(self, request, target_id):
+    def list(self, request, tid):
         # request.query_params.add('include[]', 'second_target.')
-
-        queryset = models.TargetInteraction.objects.get_target_interaction_agg(target_id)
+        target = models.Target.objects.get(tid_id=tid)
+        queryset = self.paginate_queryset(
+            models.TargetInteraction.objects.get_target_interaction_agg(target.target_id)
+        )
         serializer = serializers.TargetNetworkSerializer(
             queryset, many=True
         )
