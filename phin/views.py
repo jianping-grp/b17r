@@ -166,9 +166,7 @@ class TargetNetworkViewSet(generics.ListAPIView):
     def list(self, request, tid):
         # request.query_params.add('include[]', 'second_target.')
         target = models.Target.objects.get(tid_id=tid)
-        queryset = self.paginate_queryset(
-            models.TargetInteraction.objects.get_target_interaction_agg(target.target_id)
-        )
+        queryset = models.TargetInteraction.objects.get_target_interaction_agg(target.target_id)
         serializer = serializers.TargetNetworkSerializer(
             queryset, many=True
         )
