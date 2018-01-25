@@ -7,6 +7,17 @@ import itertools as it
 from django.db import connection
 
 
+def init_phin_molecule_hierarchy():
+    for mol in chembl_models.MoleculeDictionary.objects.all().iterator():
+        parent_mol = mol
+        if hasattr(mol, 'as_child_molecule'):
+            parent_mol = mol.as_child_molecule.parent_molregno
+        MoleculeHierarchy.objects.create(
+            molregno=mol,
+            parent=parent_mol
+        )
+
+
 def init_phin_molecule_tbl():
     # log rdkit-invalid molecule
     with open('phin/scripts/log/rdkit-invalid-mol.txt', 'w') as w:
@@ -115,84 +126,73 @@ def init_molecule_interaction_tbl():
                     mean=list(comm_act['mean']),
                     median=list(comm_act['median'])
                 )
-            # MoleculeInteraction.objects.bulk_create(
-            #     MoleculeInteraction(
-            #         first_molecule_id=molid_1,
-            #         second_molecule_id=molid_2,
-            #         target_id=x['target_id'],
-            #         min=x['min'],
-            #         max=x['max'],
-            #         mean=x['mean'],
-            #         median=x['median']
-            #     ) for idx, x in mol1.get_common_activities(molid_2).iterrows()
-            # )
-
-    # for target in Target.objects.all():
-    #     print target.target_id
-    #     if target.tid.target_type_id in ['ADMET', 'NO TARGET', 'UNCHECKED', 'UNDEFINED', 'UNKNOWN']:
-    #         continue
-    #     for act1, act2 in it.combinations(target.activities_set.filter(mean__gte=5).all(), 2):
-    #         if act1.molecule_id > act2.molecule_id:
-    #             act1, act2 = act2, act1
-    #             # act_list.append((act2, act1))
-    #         try:
-    #             mi = MoleculeInteraction.objects.get(
-    #                 first_molecule_id=act1.molecule_id,
-    #                 second_molecule_id=act2.molecule_id
-    #             )
-    #             mi.target.append(target.target_id)
-    #             mi.min.append(min(act1.min, act2.min))
-    #             mi.max.append(min(act1.max, act2.max))
-    #             mi.mean.append(min(act1.mean, act2.mean))
-    #             mi.median.append(min(act1.median, act2.median))
-    #         except MoleculeInteraction.DoesNotExist:
-    #             mi = MoleculeInteraction.objects.create(
-    #                 first_molecule_id=act1.molecule_id,
-    #                 second_molecule_id=act2.molecule_id,
-    #                 target=[target.target_id],
-    #                 min=[min(act1.min, act2.min)],
-    #                 max=[min(act1.max, act2.max)],
-    #                 mean=[min(act1.mean, act2.mean)],
-    #                 median=[min(act1.median, act2.median)]
-    #             )
-    #         mi.save()
-
-    # MoleculeInteraction.objects.bulk_create(
-    #     [
-    #         MoleculeInteraction(
-    #             first_molecule_id=x1.molecule_id,
-    #             second_molecule_id=x2.molecule_id,
-    #             target_id=target.target_id,
-    #             min=min(x1.min, x2.min),
-    #             max=min(x1.max, x2.max),
-    #             mean=min(x1.mean, x2.mean),
-    #             median=min(x1.median, x2.median)
-    #         ) for x1, x2 in act_list
-    #     ]
-    # )
 
 
-def init_target_interaction_tbl():
-    # exclude uncheck chembl (chembl912545)
-    # todo: exclude target with 0 'valid' activity
-    target_set = Target.objects.all().annotate(act_count=Count('activities')).order_by('-act_count')[1:]
+def init_target_network_tbl():
+    filter_out_type = ['ADMET', 'NO TARGET', 'UNCHECKED', 'UNDEFINED', 'UNKNOWN']
+    target_set = Target.objects.exclude(tid__target_type__in=filter_out_type) \
+        .annotate(act_count=Count('activities')) \
+        .order_by('-act_count')
     for target1, target2 in it.combinations(target_set, 2):
-        # print target1.target_id, target2.target_id
         if target1.tid_id > target2.tid_id:
             target1, target2 = target2, target1
-        TargetInteraction.objects.bulk_create(
-            [
-                TargetInteraction(
-                    first_target=target1,
-                    second_target=target2,
-                    molecule_id=x['molecule_id'],
-                    min=x['min'],
-                    max=x['max'],
-                    mean=x['mean'],
-                    median=x['median']
-                ) for idx, x in target1.get_common_activities(target2).iterrows()
-            ]
-        )
+        comm = target1.get_common_activities(target2)
+        if len(comm) > 0:
+            TargetNetwork.objects.create(
+                first_target=target1,
+                second_target=target2,
+                molecule=list(comm['molecule_id']),
+                min=list(comm['min']),
+                max=list(comm['max']),
+                mean=list(comm['mean']),
+                median=list(comm['median'])
+
+            )
+
+
+def init_target_scaffold_network_tbl():
+    filter_out_types = ['ADMET', 'NO TARGET', 'UNCHECKED', 'UNDEFINED', 'UNKNOWN']
+    target_set = Target.objects.exclude(tid__target_type__in=filter_out_types) \
+        .annotate(act_count=Count('activities')) \
+        .order_by('-act_count')
+    for target1, target2 in it.combinations(target_set, 2):
+        if target1.tid_id > target2.tid_id:
+            target1, target2 = target2, target1
+        comm = target1._get_common_scaffold_activities(target2)
+        if len(comm) > 0:
+            TargetScaffoldNetwork.objects.create(
+                first_target=target1,
+                second_target=target2,
+                scaffold=list(comm['scaffold_id']),
+                min=list(comm['min']),
+                max=list(comm['max']),
+                mean=list(comm['mean']),
+                median=list(comm['median'])
+
+            )
+
+
+# def init_target_interaction_tbl():
+#     # exclude uncheck chembl (chembl912545)
+#     # todo: exclude target with 0 'valid' activity
+#     target_set = Target.objects.all().annotate(act_count=Count('activities')).order_by('-act_count')[1:]
+#     for target1, target2 in it.combinations(target_set, 2):
+#         # print target1.target_id, target2.target_id
+#         if target1.tid_id > target2.tid_id:
+#             target1, target2 = target2, target1
+#         TargetInteraction.objects.bulk_create(
+#             [
+#                 TargetInteraction(
+#                     first_target=target1,
+#                     second_target=target2,
+#                     molecule_id=x['molecule_id'],
+#                     min=x['min'],
+#                     max=x['max'],
+#                     mean=x['mean'],
+#                     median=x['median']
+#                 ) for idx, x in target1.get_common_activities(target2).iterrows()
+#             ]
+#         )
 
 
 def init_scaffold_activities_tbl():
@@ -213,28 +213,28 @@ def init_scaffold_activities_tbl():
         )
 
 
-def init_target_scaffold_interaction_tbl():
-    # exclude uncheck chembl (chembl912545)
-    # todo: exclude target with 0 valid scaffold activity
-    target_set = Target.objects.all().annotate(act_count=Count('scaffoldactivities')).filter(act_count__gt=0).order_by(
-        '-act_count')[1:]
-    for target1, target2 in it.combinations(target_set, 2):
-        # print target1.target_id, target2.target_id
-        if target1.tid_id > target2.tid_id:
-            target1, target2 = target2, target1
-        TargetScaffoldInteraction.objects.bulk_create(
-            [
-                TargetScaffoldInteraction(
-                    first_target=target1,
-                    second_target=target2,
-                    scaffold_id=x['scaffold_id'],
-                    min=x['min'],
-                    max=x['max'],
-                    mean=x['mean'],
-                    median=x['median']
-                ) for idx, x in target1._get_common_scaffold_activities(target2).iterrows()
-            ]
-        )
+# def init_target_scaffold_interaction_tbl():
+#     # exclude uncheck chembl (chembl912545)
+#     # todo: exclude target with 0 valid scaffold activity
+#     target_set = Target.objects.all().annotate(act_count=Count('scaffoldactivities')).filter(act_count__gt=0).order_by(
+#         '-act_count')[1:]
+#     for target1, target2 in it.combinations(target_set, 2):
+#         # print target1.target_id, target2.target_id
+#         if target1.tid_id > target2.tid_id:
+#             target1, target2 = target2, target1
+#         TargetScaffoldInteraction.objects.bulk_create(
+#             [
+#                 TargetScaffoldInteraction(
+#                     first_target=target1,
+#                     second_target=target2,
+#                     scaffold_id=x['scaffold_id'],
+#                     min=x['min'],
+#                     max=x['max'],
+#                     mean=x['mean'],
+#                     median=x['median']
+#                 ) for idx, x in target1._get_common_scaffold_activities(target2).iterrows()
+#             ]
+#         )
 
 
 def kegg_disease_class_tbl():
@@ -254,6 +254,7 @@ def kegg_disease_class_tbl():
             disease_class.parent = parent
             disease_class.name = kegg_name
         disease_class.save()
+
 
 def kegg_disease_tbl():
     disease_uniprot_file = 'phin/scripts/disease-uniprot.csv'

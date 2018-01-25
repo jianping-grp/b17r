@@ -1,4 +1,4 @@
-from django.db.models import Count
+from django.db.models import Count, F
 from rest_framework import generics, permissions
 from dynamic_rest import viewsets
 from . import models, serializers

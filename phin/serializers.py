@@ -5,12 +5,27 @@ from chembl import serializers as chembl_serializers
 
 
 class ActivitiesSerializer(serializers.DynamicModelSerializer):
+    target = serializers.DynamicRelationField('TargetSerializer')
+    molecule = serializers.DynamicRelationField('MoleculeSerializer')
+
     class Meta:
         model = models.Activities
         exclude = []
 
 
+class MoleculeHierarchySerializer(serializers.DynamicModelSerializer):
+    molregno = serializers.DynamicRelationField(chembl_serializers.MoleculeDictionarySerializer, embed=True)
+    parent = serializers.DynamicRelationField(chembl_serializers.MoleculeDictionarySerializer, embed=True)
+
+    class Meta:
+        model = models.MoleculeHierarchy
+        exclude = []
+
+
 class MoleculeSerializer(serializers.DynamicModelSerializer):
+    molregno = serializers.DynamicRelationField(chembl_serializers.MoleculeDictionarySerializer, embed=True)
+    scaffold = serializers.DynamicRelationField('ScaffoldSerializer', embed=True, deferred=True)
+
     class Meta:
         model = models.Molecule
         exclude = ['ffp2', 'mfp2', 'structure', 'torsionbv', 'atompairbv']
@@ -25,9 +40,9 @@ class ScaffoldSerializer(serializers.DynamicModelSerializer):
 
 
 class ScaffoldActivitiesSerializer(serializers.DynamicModelSerializer):
-    target = serializers.DynamicRelationField('TargetSerializer', embed=True)
+    target = serializers.DynamicRelationField('TargetSerializer')
+    scaffold = serializers.DynamicRelationField(ScaffoldSerializer)
 
-    # Scaffold = serializers.DynamicRelationField(ScaffoldSerializer, embed=)
     class Meta:
         model = models.ScaffoldActivities
         exclude = []
@@ -41,34 +56,49 @@ class TargetSerializer(serializers.DynamicModelSerializer):
         exclude = []
 
 
-class TargetInteractionSerializer(serializers.DynamicModelSerializer):
+class MoleculeInteraction(serializers.DynamicModelSerializer):
+    first_molecule = serializers.DynamicRelationField(MoleculeSerializer)
+    second_molecule = serializers.DynamicRelationField(MoleculeSerializer)
+
     class Meta:
-        model = models.TargetInteraction
-        exclude = []
+        model = models.MoleculeInteraction
+        exclude = ['min', 'max', 'median']
 
 
-class TargetScaffoldInteractionSerializer(serializers.DynamicModelSerializer):
+class TargetNetworkSerializer(serializers.DynamicModelSerializer):
+    first_target = serializers.DynamicRelationField(TargetSerializer)
+    second_target = serializers.DynamicRelationField(TargetSerializer)
+
     class Meta:
-        model = models.TargetScaffoldInteraction
-        exclude = []
+        model = models.TargetNetwork
+        exclude = ['min', 'max', 'median']
 
 
-class TargetNetworkSerializer(serializers.DynamicEphemeralSerializer):
+class TargetScaffoldNetworkSerializer(serializers.DynamicModelSerializer):
+    first_target = serializers.DynamicRelationField(TargetSerializer)
+    second_target = serializers.DynamicRelationField(TargetSerializer)
+
     class Meta:
-        name = 'target-network'
-
-    first_target = serializers.DynamicRelationField(TargetSerializer, embed=True)
-    second_target = serializers.DynamicRelationField(TargetSerializer, embed=True)
-    activity_list = ListField(child=FloatField(min_value=0, max_value=99))
+        model = models.TargetScaffoldNetwork
+        exclude = ['min', 'max', 'median']
 
 
-class TargetScaffoldNetworkSerializer(serializers.DynamicEphemeralSerializer):
-    class Meta:
-        name = 'target-scaffold-network'
+# class TargetNetworkSerializer(serializers.DynamicEphemeralSerializer):
+#     class Meta:
+#         name = 'target-network'
+#
+#     first_target = serializers.DynamicRelationField(TargetSerializer, embed=True)
+#     second_target = serializers.DynamicRelationField(TargetSerializer, embed=True)
+#     activity_list = ListField(child=FloatField(min_value=0, max_value=99))
 
-    first_target = serializers.DynamicRelationField(TargetSerializer, embed=True)
-    second_target = serializers.DynamicRelationField(TargetSerializer, embed=True)
-    activity_list = ListField(child=FloatField(min_value=0, max_value=99))
+
+# class TargetScaffoldNetworkSerializer(serializers.DynamicEphemeralSerializer):
+#     class Meta:
+#         name = 'target-scaffold-network'
+#
+#     first_target = serializers.DynamicRelationField(TargetSerializer, embed=True)
+#     second_target = serializers.DynamicRelationField(TargetSerializer, embed=True)
+#     activity_list = ListField(child=FloatField(min_value=0, max_value=99))
 
 
 class MMPSerializer(serializers.DynamicModelSerializer):
@@ -89,11 +119,11 @@ class KEGGDiseaseClassSerializer(serializers.DynamicModelSerializer):
 
     class Meta:
         model = models.KEGGDiseaseClass
-        exclude = []
+        exclude = ['rght', 'lft']
 
 
 class KEGGDiseaseSerializer(serializers.DynamicModelSerializer):
-    kegg_class = serializers.DynamicRelationField(KEGGDiseaseClassSerializer)
+    kegg_class = serializers.DynamicRelationField(KEGGDiseaseClassSerializer, embed=True)
     chembl_mappings = serializers.DynamicRelationField(chembl_serializers.ComponentSequencesSerializer, many=True)
 
     class Meta:

@@ -68,6 +68,13 @@ class Scaffold(models.Model):
     ffp2 = BfpField(null=True)
 
 
+class MoleculeHierarchy(models.Model):
+    molregno = models.OneToOneField(chembl_models.MoleculeDictionary,
+                                    related_name='phin_hierarchy',
+                                    primary_key=True)
+    parent = models.ForeignKey(chembl_models.MoleculeDictionary, blank=True, null=True)
+
+
 class Molecule(models.Model):
     objects = MoleculeManager()
 
@@ -75,7 +82,7 @@ class Molecule(models.Model):
     mol_id = models.BigAutoField(primary_key=True)
     molregno = models.OneToOneField(
         chembl_models.MoleculeDictionary,
-        related_name='chembl_molecule'
+        related_name='phin_molecule'
     )
     scaffold = models.ForeignKey(Scaffold, null=True)
     structure = MolField(null=True, blank=True)
@@ -101,7 +108,7 @@ class Target(models.Model):
     target_id = models.BigAutoField(primary_key=True)
     tid = models.OneToOneField(
         chembl_models.TargetDictionary,
-        related_name='chembl_target'
+        related_name='phin_target'
     )
 
     def get_target_interaction(self, activity_type='mean'):
@@ -110,10 +117,6 @@ class Target(models.Model):
             data = pd.DataFrame(cursor.fetchall(), columns=['pk', 'first_target', 'second_target', 'activity_list'])
             # print data
             return data
-
-    def get_related_targets(self):
-        return TargetInteraction.objects.get_target_interaction(self.target_id) \
-            .distinct().values('first_target', 'second_target')
 
     # related_targets = property(_get_related_targets)
 
@@ -178,6 +181,30 @@ class ScaffoldActivities(models.Model):
     count = models.IntegerField(blank=True, null=True)
 
 
+class TargetNetwork(models.Model):
+    ti_id = models.BigAutoField(primary_key=True, db_index=True)
+    first_target = models.ForeignKey(Target, related_name='as_first', db_index=True)
+    second_target = models.ForeignKey(Target, related_name='as_second', db_index=True)
+    molecule = ArrayField(models.BigIntegerField(), blank=True)
+    # MIN(min, max, mean, and media activity value) of this two targets
+    min = ArrayField(models.FloatField(), blank=True, null=True)
+    max = ArrayField(models.FloatField(), blank=True, null=True)
+    mean = ArrayField(models.FloatField(), blank=True, null=True)
+    median = ArrayField(models.FloatField(), blank=True, null=True)
+
+
+class TargetScaffoldNetwork(models.Model):
+    ti_id = models.BigAutoField(primary_key=True, db_index=True)
+    first_target = models.ForeignKey(Target, related_name='as_scaffold_first', db_index=True)
+    second_target = models.ForeignKey(Target, related_name='as_scaffold_second', db_index=True)
+    scaffold = ArrayField(models.BigIntegerField(), blank=True)
+    # MIN(min, max, mean, and media activity value) of this two targets
+    min = ArrayField(models.FloatField(), blank=True, null=True)
+    max = ArrayField(models.FloatField(), blank=True, null=True)
+    mean = ArrayField(models.FloatField(), blank=True, null=True)
+    median = ArrayField(models.FloatField(), blank=True, null=True)
+
+
 class MoleculeInteraction(models.Model):
     """
     first_molecule.molregno > second_molecule.molregno
@@ -192,38 +219,38 @@ class MoleculeInteraction(models.Model):
     median = ArrayField(models.FloatField(), blank=True, null=True)
 
 
-class TargetInteraction(models.Model):
-    """
-    first_target.tid_id > second_target.tid_id
-    """
-    ti_id = models.BigAutoField(primary_key=True, db_index=True)
-    first_target = models.ForeignKey(Target, related_name='as_first', db_index=True)
-    second_target = models.ForeignKey(Target, related_name='as_second', db_index=True)
-    molecule = models.ForeignKey(Molecule, db_index=True)
-    # MIN(min, max, mean, and media activity value) of this two targets
-    min = models.FloatField(blank=True, null=True)
-    max = models.FloatField(blank=True, null=True)
-    mean = models.FloatField(blank=True, null=True)
-    median = models.FloatField(blank=True, null=True)
+# class TargetInteraction(models.Model):
+#     """
+#     first_target.tid_id > second_target.tid_id
+#     """
+#     ti_id = models.BigAutoField(primary_key=True, db_index=True)
+#     first_target = models.ForeignKey(Target, related_name='as_ti_first', db_index=True)
+#     second_target = models.ForeignKey(Target, related_name='as_ti_second', db_index=True)
+#     molecule = models.ForeignKey(Molecule, db_index=True)
+#     # MIN(min, max, mean, and media activity value) of this two targets
+#     min = models.FloatField(blank=True, null=True)
+#     max = models.FloatField(blank=True, null=True)
+#     mean = models.FloatField(blank=True, null=True)
+#     median = models.FloatField(blank=True, null=True)
+#
+#     objects = TargetInteractionManager()
 
-    objects = TargetInteractionManager()
 
-
-class TargetScaffoldInteraction(models.Model):
-    """
-    first_target.tid_id > second_target.tid_id
-    """
-    objects = TargetScaffoldInteractionManager()
-
-    ti_id = models.BigAutoField(primary_key=True, db_index=True)
-    first_target = models.ForeignKey(Target, related_name='as_scaffold_first', db_index=True)
-    second_target = models.ForeignKey(Target, related_name='as_scaffold_second', db_index=True)
-    scaffold = models.ForeignKey(Scaffold, db_index=True)
-    # MIN(min, max, mean, and media activity value) of this two targets
-    min = models.FloatField(blank=True, null=True)
-    max = models.FloatField(blank=True, null=True)
-    mean = models.FloatField(blank=True, null=True)
-    median = models.FloatField(blank=True, null=True)
+# class TargetScaffoldInteraction(models.Model):
+#     """
+#     first_target.tid_id > second_target.tid_id
+#     """
+#     objects = TargetScaffoldInteractionManager()
+#
+#     ti_id = models.BigAutoField(primary_key=True, db_index=True)
+#     first_target = models.ForeignKey(Target, related_name='as_ti_scaffold_first', db_index=True)
+#     second_target = models.ForeignKey(Target, related_name='as_ti_scaffold_second', db_index=True)
+#     scaffold = models.ForeignKey(Scaffold, db_index=True)
+#     # MIN(min, max, mean, and media activity value) of this two targets
+#     min = models.FloatField(blank=True, null=True)
+#     max = models.FloatField(blank=True, null=True)
+#     mean = models.FloatField(blank=True, null=True)
+#     median = models.FloatField(blank=True, null=True)
 
 
 class MMP(models.Model):

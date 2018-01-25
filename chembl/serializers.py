@@ -2,7 +2,7 @@ from rest_framework.fields import IntegerField
 
 from . import models
 from dynamic_rest import serializers
-
+from phin import models as phin_models
 
 class ActionTypeSerializer(serializers.DynamicModelSerializer):
     drugmechanism_set = serializers.DynamicRelationField('DrugMechanismSerializer', many=True, deferred=True)
@@ -413,7 +413,6 @@ class MoleculeAtcClassificationSerializer(serializers.DynamicModelSerializer):
         model = models.MoleculeAtcClassification
         exclude = []
 
-
 class MoleculeDictionarySerializer(serializers.DynamicModelSerializer):
     activities_set = serializers.DynamicRelationField('ActivitiesSerializer', many=True, deferred=True)
     as_active_molecule = serializers.DynamicRelationField('MoleculeHierarchySerializer', many=True, deferred=True)
@@ -421,7 +420,14 @@ class MoleculeDictionarySerializer(serializers.DynamicModelSerializer):
     as_parent_molecule = serializers.DynamicRelationField('MoleculeHierarchySerializer', many=True, deferred=True)
     biotherapeutics = serializers.DynamicRelationField('BiotherapeuticsSerializer')
     chembl = serializers.DynamicRelationField('ChemblIdLookupSerializer')
-    phin_id = serializers.DynamicRelationField('phin.serializers.MoleculeSerializer', source='chembl_molecule')
+    phin_id = serializers.DynamicRelationField(
+        'phin.serializers.MoleculeSerializer',
+        read_only=True, source='phin_molecule'
+    )
+    phin_hierarchy = serializers.DynamicRelationField(
+        'phin.serializers.MoleculeHierarchySerializer',
+        read_only=True
+    )
     compoundproperties = serializers.DynamicRelationField('CompoundPropertiesSerializer')
     compoundrecords_set = serializers.DynamicRelationField('CompoundRecordsSerializer', many=True, deferred=True)
     compoundstructuralalerts_set = serializers.DynamicRelationField('CompoundStructuralAlertsSerializer', many=True, deferred=True)
@@ -435,7 +441,6 @@ class MoleculeDictionarySerializer(serializers.DynamicModelSerializer):
     moleculeiracclassification_set = serializers.DynamicRelationField('MoleculeIracClassificationSerializer', many=True, deferred=True)
     moleculesynonyms_set = serializers.DynamicRelationField('MoleculeSynonymsSerializer', many=True, deferred=True)
     activities_count = IntegerField(read_only=True)
-
     class Meta:
         model = models.MoleculeDictionary
         exclude = []
@@ -638,7 +643,7 @@ class TargetDictionarySerializer(serializers.DynamicModelSerializer):
     #chembl_target = serializers.DynamicRelationField('TargetSerializer')
     drugmechanism_set = serializers.DynamicRelationField('DrugMechanismSerializer', many=True, deferred=True)
     metabolism_set = serializers.DynamicRelationField('MetabolismSerializer', many=True, deferred=True)
-    related_target = serializers.DynamicRelationField('TargetRelationsSerializer', many=True, deferred=True)
+    related_target = serializers.DynamicRelationField('TargetRelationsSerializer', many=True, deferred=True, embed=True)
     target = serializers.DynamicRelationField('TargetRelationsSerializer', many=True, deferred=True)
     target_type = serializers.DynamicRelationField('TargetTypeSerializer')
     targetcomponents_set = serializers.DynamicRelationField(
@@ -647,7 +652,7 @@ class TargetDictionarySerializer(serializers.DynamicModelSerializer):
     )
 
     assays_count = IntegerField(read_only=True)
-    phin_id = serializers.DynamicRelationField("phin.serializers.TargetSerializer", source='chembl_target')
+    phin_id = serializers.DynamicRelationField("phin.serializers.TargetSerializer", source='phin_target')
     #activity_count = IntegerField(read_only=True)
     class Meta:
         model = models.TargetDictionary
