@@ -1,10 +1,7 @@
-from rest_framework import generics, permissions
-from django.db import connection
+from rest_framework import permissions
 from dynamic_rest import viewsets
 from rest_framework.response import Response
-from rest_framework.decorators import api_view, permission_classes, detail_route, list_route
-from rest_framework.viewsets import ViewSet
-from rest_framework import generics
+from rest_framework.decorators import api_view, permission_classes, list_route
 from django_rdkit.models import *
 import pandas as pd
 from . import sql_helper
@@ -80,31 +77,17 @@ class MoleculeViewSet(viewsets.DynamicModelViewSet):
     queryset = models.Molecule.objects.all()
     serializer_class = serializers.MoleculeSerializer
 
-    @list_route(methods=['POST', 'GET'], permission_classes=[permissions.AllowAny])
-    def search(self, request):
-        smiles = str(request.data['smiles'])
-        similarity = float(request.data['similarity'])
-        search_type = str(request.data['search type'])
-        # perform substructure
-        print smiles, similarity, search_type
-        result = {}
-        if search_type == 'substructure':
-            result = models.Molecule.objects.filter(structure__hassubstruct=QMOL(Value(smiles))).all()
-        # structure search
-        else:
-            try:
-                result = models.Molecule.objects.structure_search(smiles, similarity)
-            except:
-                print 'structure search error'
-        if result:
-            page = self.paginate_queryset(result)
-            if page is not None:
-                serializer = self.get_serializer(page, many=True)
-                return self.get_paginated_response(serializer.data)
-            serializer = self.get_serializer(result, many=True)
-            return Response(serializer.data)
+    def get_queryset(self, *args, **kwargs):
+        if 'search_type' in self.request.query_params:
+            search_type = self.request.query_params.get('search_type')
+            smiles = self.request.query_params.get('smiles')
+            if search_type == 'substructure':
+                return models.Molecule.objects.filter(structure__hassubstruct=QMOL(Value(smiles))).all()
+            elif search_type == 'structure':
 
-        return Response(result)
+                similarity = self.request.query_params.get('similarity')
+                return models.Molecule.objects.structure_search(smiles, similarity)
+        return models.Molecule.objects.all()
 
 
 class ScaffoldActivitiesViewSet(viewsets.DynamicModelViewSet):
