@@ -3,9 +3,11 @@ psycopg2
 django-filter
 django_graphiql
 graphql-core
-graphene
+graphene>=2.0
 graphene-django
 django-cors-headers
+django-mptt
+numpy
 pandas
 pillow
 djangorestframework

@@ -134,14 +134,14 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 # Graphql integration
-# INSTALLED_APPS += ('graphene_django', )
-# GRAPHENE = {
-#     'MIDDLEWARE': (
-#         'graphene_django.debug.DjangoDebugMiddleware',
-#     ),
-#     'SCHEMA': 'chembl_explorer.schema.schema',
-#     'SCHEMA_INDENT': 2
-# }
+INSTALLED_APPS += ('graphene_django', )
+GRAPHENE = {
+    'MIDDLEWARE': (
+        'graphene_django.debug.DjangoDebugMiddleware',
+    ),
+    'SCHEMA': 'chembl_explorer.schema.schema',
+    'SCHEMA_INDENT': 2
+}
 
 # DRF
 REST_FRAMEWORK = {

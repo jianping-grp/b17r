@@ -154,10 +154,6 @@ class ScaffoldViewSet(viewsets.DynamicModelViewSet):
         return Response(result)
 
 
-# class TargetInteractionViewSet(viewsets.DynamicModelViewSet):
-#     queryset = models.TargetInteraction.objects.all()
-#     serializer_class = serializers.TargetInteractionSerializer
-
 class MoleculeInteractionViewSet(viewsets.DynamicModelViewSet):
     queryset = models.MoleculeInteraction.objects.all()
     serializer_class = serializers.MoleculeInteraction
