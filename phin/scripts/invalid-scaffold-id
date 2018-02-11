@@ -1,0 +1,21 @@
+264051 O=[n+]1[c-]nccc1
+289695 O=c1[c-]c(-c2ccccc2)n[nH]1
+365752 [c+]1sc2c(s1)C(c1ccccc1)Oc1ccccc1-2
+385165 O=c1[c-]c(=O)n(CCc2ccccc2)c(=O)[nH]1
+385166 O=c1[c-]c(=O)n(Cc2ccccc2)c(=O)[nH]1
+
+scaffold = models.Scaffold.objects.get(pk=264051)
+scaffold.delete()
+(2, {u'phin.Activities': 0, u'phin.ScaffoldActivities': 0, u'phin.Molecule': 1, u'phin.Scaffold': 1, u'phin.MoleculeInteraction': 0})
+scaffold = models.Scaffold.objects.get(pk=289695)
+scaffold.delete()
+(2, {u'phin.Activities': 0, u'phin.ScaffoldActivities': 0, u'phin.Molecule': 1, u'phin.Scaffold': 1, u'phin.MoleculeInteraction': 0})
+scaffold = models.Scaffold.objects.get(pk=365752)
+scaffold.delete()
+(20, {u'phin.Activities': 0, u'phin.ScaffoldActivities': 0, u'phin.Molecule': 19, u'phin.Scaffold': 1, u'phin.MoleculeInteraction': 0})
+scaffold = models.Scaffold.objects.get(pk=385165)
+scaffold.delete()
+(3, {u'phin.Activities': 0, u'phin.ScaffoldActivities': 0, u'phin.Molecule': 2, u'phin.Scaffold': 1, u'phin.MoleculeInteraction': 0})
+scaffold = models.Scaffold.objects.get(pk=385166)
+scaffold.delete()
+(2, {u'phin.Activities': 0, u'phin.ScaffoldActivities': 0, u'phin.Molecule': 1, u'phin.Scaffold': 1, u'phin.MoleculeInteraction': 0})
