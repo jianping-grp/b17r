@@ -1,8 +1,7 @@
-from rest_framework.fields import IntegerField
 
 from . import models
 from dynamic_rest import serializers
-from phin import models as phin_models
+
 
 class ActionTypeSerializer(serializers.DynamicModelSerializer):
     drugmechanism_set = serializers.DynamicRelationField('DrugMechanismSerializer', many=True, deferred=True)
@@ -13,17 +12,37 @@ class ActionTypeSerializer(serializers.DynamicModelSerializer):
 
 
 class ActivitiesSerializer(serializers.DynamicModelSerializer):
+    activityproperties_set = serializers.DynamicRelationField('ActivityPropertiesSerializer', many=True, deferred=True)
+    activitysuppmap_set = serializers.DynamicRelationField('ActivitySuppMapSerializer', many=True, deferred=True)
     assay = serializers.DynamicRelationField('AssaysSerializer')
     bao_endpoint = serializers.DynamicRelationField('BioassayOntologySerializer')
     data_validity_comment = serializers.DynamicRelationField('DataValidityLookupSerializer')
     doc = serializers.DynamicRelationField('DocsSerializer')
-    ligandeff = serializers.DynamicRelationField('LigandEffSerializer')
+    ligandeff_set = serializers.DynamicRelationField('LigandEffSerializer', many=True, deferred=True)
     molregno = serializers.DynamicRelationField('MoleculeDictionarySerializer')
     predictedbindingdomains_set = serializers.DynamicRelationField('PredictedBindingDomainsSerializer', many=True, deferred=True)
     record = serializers.DynamicRelationField('CompoundRecordsSerializer')
+    src = serializers.DynamicRelationField('SourceSerializer')
 
     class Meta:
         model = models.Activities
+        exclude = []
+
+
+class ActivityPropertiesSerializer(serializers.DynamicModelSerializer):
+    activity = serializers.DynamicRelationField('ActivitiesSerializer')
+
+    class Meta:
+        model = models.ActivityProperties
+        exclude = []
+
+
+class ActivitySmidSerializer(serializers.DynamicModelSerializer):
+    activitysupp_set = serializers.DynamicRelationField('ActivitySuppSerializer', many=True, deferred=True)
+    activitysuppmap_set = serializers.DynamicRelationField('ActivitySuppMapSerializer', many=True, deferred=True)
+
+    class Meta:
+        model = models.ActivitySmid
         exclude = []
 
 
@@ -34,9 +53,25 @@ class ActivityStdsLookupSerializer(serializers.DynamicModelSerializer):
         exclude = []
 
 
+class ActivitySuppSerializer(serializers.DynamicModelSerializer):
+    smid = serializers.DynamicRelationField('ActivitySmidSerializer')
+
+    class Meta:
+        model = models.ActivitySupp
+        exclude = []
+
+
+class ActivitySuppMapSerializer(serializers.DynamicModelSerializer):
+    activity = serializers.DynamicRelationField('ActivitiesSerializer')
+    smid = serializers.DynamicRelationField('ActivitySmidSerializer')
+
+    class Meta:
+        model = models.ActivitySuppMap
+        exclude = []
+
+
 class AssayParametersSerializer(serializers.DynamicModelSerializer):
     assay = serializers.DynamicRelationField('AssaysSerializer')
-    parameter_type = serializers.DynamicRelationField('ParameterTypeSerializer')
 
     class Meta:
         model = models.AssayParameters
@@ -61,7 +96,9 @@ class AssaysSerializer(serializers.DynamicModelSerializer):
     confidence_score = serializers.DynamicRelationField('ConfidenceScoreLookupSerializer')
     curated_by = serializers.DynamicRelationField('CurationLookupSerializer')
     doc = serializers.DynamicRelationField('DocsSerializer')
+    left_hand_assay = serializers.DynamicRelationField('MMPSerializer', many=True, deferred=True)
     relationship_type = serializers.DynamicRelationField('RelationshipTypeSerializer')
+    right_hand_assay = serializers.DynamicRelationField('MMPSerializer', many=True, deferred=True)
     src = serializers.DynamicRelationField('SourceSerializer')
     tid = serializers.DynamicRelationField('TargetDictionarySerializer')
     tissue = serializers.DynamicRelationField('TissueDictionarySerializer')
@@ -137,12 +174,12 @@ class CellDictionarySerializer(serializers.DynamicModelSerializer):
 
 
 class ChemblIdLookupSerializer(serializers.DynamicModelSerializer):
-    assays = serializers.DynamicRelationField('AssaysSerializer')
-    celldictionary = serializers.DynamicRelationField('CellDictionarySerializer')
-    docs = serializers.DynamicRelationField('DocsSerializer')
-    moleculedictionary = serializers.DynamicRelationField('MoleculeDictionarySerializer')
+    assays_set = serializers.DynamicRelationField('AssaysSerializer', many=True, deferred=True)
+    celldictionary_set = serializers.DynamicRelationField('CellDictionarySerializer', many=True, deferred=True)
+    docs_set = serializers.DynamicRelationField('DocsSerializer', many=True, deferred=True)
+    moleculedictionary_set = serializers.DynamicRelationField('MoleculeDictionarySerializer', many=True, deferred=True)
     targetdictionary_set = serializers.DynamicRelationField('TargetDictionarySerializer', many=True, deferred=True)
-    tissuedictionary = serializers.DynamicRelationField('TissueDictionarySerializer')
+    tissuedictionary_set = serializers.DynamicRelationField('TissueDictionarySerializer', many=True, deferred=True)
 
     class Meta:
         model = models.ChemblIdLookup
@@ -183,11 +220,6 @@ class ComponentSequencesSerializer(serializers.DynamicModelSerializer):
     componentsynonyms_set = serializers.DynamicRelationField('ComponentSynonymsSerializer', many=True, deferred=True)
     sitecomponents_set = serializers.DynamicRelationField('SiteComponentsSerializer', many=True, deferred=True)
     targetcomponents_set = serializers.DynamicRelationField('TargetComponentsSerializer', many=True, deferred=True)
-    keggdisease_set = serializers.DynamicRelationField(
-        "phin.serializers.KEGGDiseaseSerializer",
-        many=True
-    )
-
 
     class Meta:
         model = models.ComponentSequences
@@ -213,14 +245,12 @@ class CompoundPropertiesSerializer(serializers.DynamicModelSerializer):
 class CompoundRecordsSerializer(serializers.DynamicModelSerializer):
     activities_set = serializers.DynamicRelationField('ActivitiesSerializer', many=True, deferred=True)
     doc = serializers.DynamicRelationField('DocsSerializer')
-    drug_compound = serializers.DynamicRelationField('MetabolismSerializer', many=True, deferred=True)
     drugindication_set = serializers.DynamicRelationField('DrugIndicationSerializer', many=True, deferred=True)
     drugmechanism_set = serializers.DynamicRelationField('DrugMechanismSerializer', many=True, deferred=True)
     formulations_set = serializers.DynamicRelationField('FormulationsSerializer', many=True, deferred=True)
-    metabolite_record_compound = serializers.DynamicRelationField('MetabolismSerializer', many=True, deferred=True)
+    metabolism_set = serializers.DynamicRelationField('MetabolismSerializer', many=True, deferred=True)
     molregno = serializers.DynamicRelationField('MoleculeDictionarySerializer')
     src = serializers.DynamicRelationField('SourceSerializer')
-    substrate_compound = serializers.DynamicRelationField('MetabolismSerializer', many=True, deferred=True)
 
     class Meta:
         model = models.CompoundRecords
@@ -281,6 +311,7 @@ class DocsSerializer(serializers.DynamicModelSerializer):
     assays_set = serializers.DynamicRelationField('AssaysSerializer', many=True, deferred=True)
     chembl = serializers.DynamicRelationField('ChemblIdLookupSerializer')
     compoundrecords_set = serializers.DynamicRelationField('CompoundRecordsSerializer', many=True, deferred=True)
+    src = serializers.DynamicRelationField('SourceSerializer')
 
     class Meta:
         model = models.Docs
@@ -413,34 +444,29 @@ class MoleculeAtcClassificationSerializer(serializers.DynamicModelSerializer):
         model = models.MoleculeAtcClassification
         exclude = []
 
+
 class MoleculeDictionarySerializer(serializers.DynamicModelSerializer):
     activities_set = serializers.DynamicRelationField('ActivitiesSerializer', many=True, deferred=True)
-    as_active_molecule = serializers.DynamicRelationField('MoleculeHierarchySerializer', many=True, deferred=True)
-    as_child_molecule = serializers.DynamicRelationField('MoleculeHierarchySerializer')
-    as_parent_molecule = serializers.DynamicRelationField('MoleculeHierarchySerializer', many=True, deferred=True)
-    biotherapeutics = serializers.DynamicRelationField('BiotherapeuticsSerializer')
+    biotherapeutics_set = serializers.DynamicRelationField('BiotherapeuticsSerializer', many=True, deferred=True)
     chembl = serializers.DynamicRelationField('ChemblIdLookupSerializer')
-    phin_id = serializers.DynamicRelationField(
-        'phin.serializers.MoleculeSerializer',
-        read_only=True, source='phin_molecule'
-    )
-    phin_hierarchy = serializers.DynamicRelationField(
-        'phin.serializers.MoleculeHierarchySerializer',
-        read_only=True
-    )
-    compoundproperties = serializers.DynamicRelationField('CompoundPropertiesSerializer')
+    compoundproperties_set = serializers.DynamicRelationField('CompoundPropertiesSerializer', many=True, deferred=True)
     compoundrecords_set = serializers.DynamicRelationField('CompoundRecordsSerializer', many=True, deferred=True)
     compoundstructuralalerts_set = serializers.DynamicRelationField('CompoundStructuralAlertsSerializer', many=True, deferred=True)
-    compoundstructures = serializers.DynamicRelationField('CompoundStructuresSerializer', embed=True, deferred=True)
+    compoundstructures_set = serializers.DynamicRelationField('CompoundStructuresSerializer', many=True, deferred=True)
     drugindication_set = serializers.DynamicRelationField('DrugIndicationSerializer', many=True, deferred=True)
     drugmechanism_set = serializers.DynamicRelationField('DrugMechanismSerializer', many=True, deferred=True)
     formulations_set = serializers.DynamicRelationField('FormulationsSerializer', many=True, deferred=True)
+    left_hand_mol = serializers.DynamicRelationField('MMPSerializer', many=True, deferred=True)
     moleculeatcclassification_set = serializers.DynamicRelationField('MoleculeAtcClassificationSerializer', many=True, deferred=True)
     moleculefracclassification_set = serializers.DynamicRelationField('MoleculeFracClassificationSerializer', many=True, deferred=True)
+    moleculehierarchy_set = serializers.DynamicRelationField('MoleculeHierarchySerializer', many=True, deferred=True)
     moleculehracclassification_set = serializers.DynamicRelationField('MoleculeHracClassificationSerializer', many=True, deferred=True)
     moleculeiracclassification_set = serializers.DynamicRelationField('MoleculeIracClassificationSerializer', many=True, deferred=True)
     moleculesynonyms_set = serializers.DynamicRelationField('MoleculeSynonymsSerializer', many=True, deferred=True)
-    activities_count = IntegerField(read_only=True)
+    phin_hierarchy = serializers.DynamicRelationField('MoleculeHierarchySerializer')
+    phin_molecule = serializers.DynamicRelationField('MoleculeSerializer')
+    right_hand_mol = serializers.DynamicRelationField('MMPSerializer', many=True, deferred=True)
+
     class Meta:
         model = models.MoleculeDictionary
         exclude = []
@@ -496,14 +522,6 @@ class OrganismClassSerializer(serializers.DynamicModelSerializer):
 
     class Meta:
         model = models.OrganismClass
-        exclude = []
-
-
-class ParameterTypeSerializer(serializers.DynamicModelSerializer):
-    assayparameters_set = serializers.DynamicRelationField('AssayParametersSerializer', many=True, deferred=True)
-
-    class Meta:
-        model = models.ParameterType
         exclude = []
 
 
@@ -566,6 +584,13 @@ class ProteinFamilyClassificationSerializer(serializers.DynamicModelSerializer):
         exclude = []
 
 
+class RawDataSerializer(serializers.DynamicModelSerializer):
+
+    class Meta:
+        model = models.RawData
+        exclude = []
+
+
 class RelationshipTypeSerializer(serializers.DynamicModelSerializer):
     assays_set = serializers.DynamicRelationField('AssaysSerializer', many=True, deferred=True)
 
@@ -602,8 +627,10 @@ class SiteComponentsSerializer(serializers.DynamicModelSerializer):
 
 
 class SourceSerializer(serializers.DynamicModelSerializer):
+    activities_set = serializers.DynamicRelationField('ActivitiesSerializer', many=True, deferred=True)
     assays_set = serializers.DynamicRelationField('AssaysSerializer', many=True, deferred=True)
     compoundrecords_set = serializers.DynamicRelationField('CompoundRecordsSerializer', many=True, deferred=True)
+    docs_set = serializers.DynamicRelationField('DocsSerializer', many=True, deferred=True)
 
     class Meta:
         model = models.Source
@@ -628,7 +655,7 @@ class StructuralAlertsSerializer(serializers.DynamicModelSerializer):
 
 
 class TargetComponentsSerializer(serializers.DynamicModelSerializer):
-    component = serializers.DynamicRelationField('ComponentSequencesSerializer', embed=True)
+    component = serializers.DynamicRelationField('ComponentSequencesSerializer')
     tid = serializers.DynamicRelationField('TargetDictionarySerializer')
 
     class Meta:
@@ -640,20 +667,14 @@ class TargetDictionarySerializer(serializers.DynamicModelSerializer):
     assays_set = serializers.DynamicRelationField('AssaysSerializer', many=True, deferred=True)
     bindingsites_set = serializers.DynamicRelationField('BindingSitesSerializer', many=True, deferred=True)
     chembl = serializers.DynamicRelationField('ChemblIdLookupSerializer')
-    #chembl_target = serializers.DynamicRelationField('TargetSerializer')
     drugmechanism_set = serializers.DynamicRelationField('DrugMechanismSerializer', many=True, deferred=True)
     metabolism_set = serializers.DynamicRelationField('MetabolismSerializer', many=True, deferred=True)
-    related_target = serializers.DynamicRelationField('TargetRelationsSerializer', many=True, deferred=True, embed=True)
-    target = serializers.DynamicRelationField('TargetRelationsSerializer', many=True, deferred=True)
+    mmp_set = serializers.DynamicRelationField('MMPSerializer', many=True, deferred=True)
+    phin_target = serializers.DynamicRelationField('TargetSerializer')
     target_type = serializers.DynamicRelationField('TargetTypeSerializer')
-    targetcomponents_set = serializers.DynamicRelationField(
-        'TargetComponentsSerializer',
-        many=True, deferred=True, embed=True
-    )
+    targetcomponents_set = serializers.DynamicRelationField('TargetComponentsSerializer', many=True, deferred=True)
+    targetrelations_set = serializers.DynamicRelationField('TargetRelationsSerializer', many=True, deferred=True)
 
-    assays_count = IntegerField(read_only=True)
-    phin_id = serializers.DynamicRelationField("phin.serializers.TargetSerializer", source='phin_target')
-    #activity_count = IntegerField(read_only=True)
     class Meta:
         model = models.TargetDictionary
         exclude = []

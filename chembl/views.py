@@ -1,4 +1,4 @@
-from django.db.models import Count, F
+
 from rest_framework import generics, permissions
 from dynamic_rest import viewsets
 from . import models, serializers
@@ -12,12 +12,31 @@ class ActionTypeViewSet(viewsets.DynamicModelViewSet):
 class ActivitiesViewSet(viewsets.DynamicModelViewSet):
     queryset = models.Activities.objects.all()
     serializer_class = serializers.ActivitiesSerializer
-    ordering = ('activity_id',)
+
+
+class ActivityPropertiesViewSet(viewsets.DynamicModelViewSet):
+    queryset = models.ActivityProperties.objects.all()
+    serializer_class = serializers.ActivityPropertiesSerializer
+
+
+class ActivitySmidViewSet(viewsets.DynamicModelViewSet):
+    queryset = models.ActivitySmid.objects.all()
+    serializer_class = serializers.ActivitySmidSerializer
 
 
 class ActivityStdsLookupViewSet(viewsets.DynamicModelViewSet):
     queryset = models.ActivityStdsLookup.objects.all()
     serializer_class = serializers.ActivityStdsLookupSerializer
+
+
+class ActivitySuppMapViewSet(viewsets.DynamicModelViewSet):
+    queryset = models.ActivitySuppMap.objects.all()
+    serializer_class = serializers.ActivitySuppMapSerializer
+
+
+class ActivitySuppViewSet(viewsets.DynamicModelViewSet):
+    queryset = models.ActivitySupp.objects.all()
+    serializer_class = serializers.ActivitySuppSerializer
 
 
 class AssayParametersViewSet(viewsets.DynamicModelViewSet):
@@ -216,9 +235,7 @@ class MoleculeAtcClassificationViewSet(viewsets.DynamicModelViewSet):
 
 
 class MoleculeDictionaryViewSet(viewsets.DynamicModelViewSet):
-    queryset = models.MoleculeDictionary.objects.all().annotate(
-        activities_count=Count('activities')
-    )
+    queryset = models.MoleculeDictionary.objects.all()
     serializer_class = serializers.MoleculeDictionarySerializer
 
 
@@ -250,11 +267,6 @@ class MoleculeSynonymsViewSet(viewsets.DynamicModelViewSet):
 class OrganismClassViewSet(viewsets.DynamicModelViewSet):
     queryset = models.OrganismClass.objects.all()
     serializer_class = serializers.OrganismClassSerializer
-
-
-class ParameterTypeViewSet(viewsets.DynamicModelViewSet):
-    queryset = models.ParameterType.objects.all()
-    serializer_class = serializers.ParameterTypeSerializer
 
 
 class PatentUseCodesViewSet(viewsets.DynamicModelViewSet):
@@ -290,6 +302,11 @@ class ProteinClassificationViewSet(viewsets.DynamicModelViewSet):
 class ProteinFamilyClassificationViewSet(viewsets.DynamicModelViewSet):
     queryset = models.ProteinFamilyClassification.objects.all()
     serializer_class = serializers.ProteinFamilyClassificationSerializer
+
+
+class RawDataViewSet(viewsets.DynamicModelViewSet):
+    queryset = models.RawData.objects.all()
+    serializer_class = serializers.RawDataSerializer
 
 
 class RelationshipTypeViewSet(viewsets.DynamicModelViewSet):
@@ -333,8 +350,7 @@ class TargetComponentsViewSet(viewsets.DynamicModelViewSet):
 
 
 class TargetDictionaryViewSet(viewsets.DynamicModelViewSet):
-    queryset = models.TargetDictionary.objects.all(
-    ).annotate(assays_count=Count('assays'))
+    queryset = models.TargetDictionary.objects.all()
     serializer_class = serializers.TargetDictionarySerializer
 
 
@@ -366,3 +382,5 @@ class VariantSequencesViewSet(viewsets.DynamicModelViewSet):
 class VersionViewSet(viewsets.DynamicModelViewSet):
     queryset = models.Version.objects.all()
     serializer_class = serializers.VersionSerializer
+
+

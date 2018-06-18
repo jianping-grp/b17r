@@ -145,7 +145,7 @@ def create_urls(app_views, file_path):
 def run():
     from chembl import models
     create_serializers(models, 'chembl/serializers.py')
-    # from phin import serializers
-    # create_viewsets(serializers, 'phin/views.py')
-    # from phin import views
-    # create_urls(views, 'phin/urls.py')
+    from chembl import serializers
+    create_viewsets(serializers, 'chembl/views.py')
+    from chembl import views
+    create_urls(views, 'chembl/urls.py')
