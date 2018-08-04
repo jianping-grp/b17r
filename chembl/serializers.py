@@ -670,7 +670,7 @@ class TargetDictionarySerializer(serializers.DynamicModelSerializer):
     drugmechanism_set = serializers.DynamicRelationField('DrugMechanismSerializer', many=True, deferred=True)
     metabolism_set = serializers.DynamicRelationField('MetabolismSerializer', many=True, deferred=True)
     mmp_set = serializers.DynamicRelationField('MMPSerializer', many=True, deferred=True)
-    phin_target = serializers.DynamicRelationField('TargetSerializer')
+    phin_target = serializers.DynamicRelationField()
     target_type = serializers.DynamicRelationField('TargetTypeSerializer')
     targetcomponents_set = serializers.DynamicRelationField('TargetComponentsSerializer', many=True, deferred=True)
     targetrelations_set = serializers.DynamicRelationField('TargetRelationsSerializer', many=True, deferred=True)

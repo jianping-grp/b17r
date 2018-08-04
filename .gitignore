@@ -105,4 +105,4 @@ phin/scripts/log/
 
 *.pyc
 /.idea/
-local_settings.py
+/logs/

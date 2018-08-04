@@ -5,6 +5,8 @@ from rdkit.Chem.Scaffolds import MurckoScaffold
 from django_rdkit.models import *
 import itertools as it
 from django.db import connection
+from chembl_explorer import settings
+import os
 
 
 def init_phin_molecule_hierarchy():
@@ -20,7 +22,7 @@ def init_phin_molecule_hierarchy():
 
 def init_phin_molecule_tbl():
     # log rdkit-invalid molecule
-    with open('phin/scripts/log/rdkit-invalid-mol.txt', 'w') as w:
+    with open(os.path.join(settings.BASE_DIR, 'logs', 'rdkit-invalid-mol.txt'), 'w') as w:
         mol_set = chembl_models.MoleculeDictionary.objects.all()
         for idx, mol in enumerate(mol_set.iterator()):
             # print mol.molregno
@@ -68,7 +70,7 @@ def init_scaffold_tbl():
 
 def init_phin_activities_tbl():
     target_set = Target.objects.all()
-    with open('phin/scripts/log/init_activities_tbl.log', 'w') as w:
+    with open('init_activities_tbl.log', 'w') as w:
         for target in target_set.iterator():
             print target.target_id, target.tid_id
             for idx, row in target.get_activities_pchembl_list() \
@@ -257,7 +259,7 @@ def kegg_disease_class_tbl():
 
 
 def kegg_disease_tbl():
-    disease_uniprot_file = 'phin/scripts/disease-uniprot.csv'
+    disease_uniprot_file = os.path.join(settings.BASE_DIR, 'phin/scripts', 'disease-uniprot.csv')
     for row in open(disease_uniprot_file):
         cell_list = row.strip().split(',')
         if len(cell_list) >= 2:
@@ -277,6 +279,9 @@ def kegg_disease_tbl():
 
 
 def run():
+    # print 'init molecule hirarchy'
+    # init_phin_molecule_hierarchy()
+    #
     # print 'init molecule table'
     # init_phin_molecule_tbl()
     #
@@ -289,11 +294,15 @@ def run():
     # print 'init phin activities table',
     # init_phin_activities_tbl()
     #
-    # print 'target interaction table'
-    # init_target_interaction_tbl()
+    # print 'scaffold activities table'
+    # init_scaffold_activities_tbl()
 
-    print 'scaffold activities table'
-    init_scaffold_activities_tbl()
+    # print 'target interaction'
+    # init_target_network_tbl()
 
-    print 'target scaffold interaction table'
-    init_target_scaffold_interaction_tbl()
+    # print 'molecule interactions'
+    # init_molecule_interaction_tbl()
+
+    # print 'kegg disease'
+    # kegg_disease_class_tbl()
+    kegg_disease_tbl()

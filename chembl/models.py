@@ -27,9 +27,9 @@ class Activities(models.Model):
     record = models.ForeignKey('CompoundRecords', models.DO_NOTHING)
     molregno = models.ForeignKey('MoleculeDictionary', models.DO_NOTHING, db_column='molregno', blank=True, null=True)
     standard_relation = models.CharField(max_length=50, blank=True, null=True)
-    published_value = models.DecimalField(max_digits=65535, decimal_places=65535, blank=True, null=True)
+    published_value = models.DecimalField(max_digits=16, decimal_places=4, blank=True, null=True)
     published_units = models.CharField(max_length=100, blank=True, null=True)
-    standard_value = models.DecimalField(max_digits=65535, decimal_places=65535, blank=True, null=True)
+    standard_value = models.DecimalField(max_digits=16, decimal_places=4, blank=True, null=True)
     standard_units = models.CharField(max_length=100, blank=True, null=True)
     standard_flag = models.SmallIntegerField(blank=True, null=True)
     standard_type = models.CharField(max_length=250, blank=True, null=True)
@@ -45,12 +45,12 @@ class Activities(models.Model):
     uo_units = models.CharField(max_length=10, blank=True, null=True)
     qudt_units = models.CharField(max_length=70, blank=True, null=True)
     toid = models.BigIntegerField(blank=True, null=True)
-    upper_value = models.DecimalField(max_digits=65535, decimal_places=65535, blank=True, null=True)
-    standard_upper_value = models.DecimalField(max_digits=65535, decimal_places=65535, blank=True, null=True)
+    upper_value = models.DecimalField(max_digits=16, decimal_places=4, blank=True, null=True)
+    standard_upper_value = models.DecimalField(max_digits=16, decimal_places=4, blank=True, null=True)
     src = models.ForeignKey('Source', models.DO_NOTHING, blank=True, null=True)
     type = models.CharField(max_length=250)
     relation = models.CharField(max_length=50, blank=True, null=True)
-    value = models.DecimalField(max_digits=65535, decimal_places=65535, blank=True, null=True)
+    value = models.DecimalField(max_digits=16, decimal_places=4, blank=True, null=True)
     units = models.CharField(max_length=100, blank=True, null=True)
     text_value = models.CharField(max_length=1000, blank=True, null=True)
     standard_text_value = models.CharField(max_length=1000, blank=True, null=True)
@@ -127,7 +127,7 @@ class ActivitySupp(models.Model):
 
 
 class ActivitySuppMap(models.Model):
-    activity = models.ForeignKey(Activities, models.DO_NOTHING, primary_key=True)
+    activity = models.OneToOneField(Activities, models.DO_NOTHING, primary_key=True)
     smid = models.ForeignKey(ActivitySmid, models.DO_NOTHING, db_column='smid')
 
     class Meta:
@@ -187,7 +187,7 @@ class Assays(models.Model):
     curated_by = models.ForeignKey('CurationLookup', models.DO_NOTHING, db_column='curated_by', blank=True, null=True)
     src = models.ForeignKey('Source', models.DO_NOTHING)
     src_assay_id = models.CharField(max_length=50, blank=True, null=True)
-    chembl = models.ForeignKey('ChemblIdLookup', models.DO_NOTHING, unique=True)
+    chembl = models.OneToOneField('ChemblIdLookup', models.DO_NOTHING, unique=True)
     cell = models.ForeignKey('CellDictionary', models.DO_NOTHING, blank=True, null=True)
     bao_format = models.ForeignKey('BioassayOntology', models.DO_NOTHING, db_column='bao_format', blank=True, null=True)
     tissue = models.ForeignKey('TissueDictionary', models.DO_NOTHING, blank=True, null=True)
@@ -261,7 +261,7 @@ class BiotherapeuticComponents(models.Model):
 
 
 class Biotherapeutics(models.Model):
-    molregno = models.ForeignKey('MoleculeDictionary', models.DO_NOTHING, db_column='molregno', primary_key=True)
+    molregno = models.OneToOneField('MoleculeDictionary', models.DO_NOTHING, db_column='molregno', primary_key=True)
     description = models.CharField(max_length=2000, blank=True, null=True)
     helm_notation = models.CharField(max_length=4000, blank=True, null=True)
 
@@ -281,7 +281,7 @@ class CellDictionary(models.Model):
     efo_id = models.CharField(max_length=12, blank=True, null=True)
     cellosaurus_id = models.CharField(max_length=15, blank=True, null=True)
     cl_lincs_id = models.CharField(max_length=8, blank=True, null=True)
-    chembl = models.ForeignKey('ChemblIdLookup', models.DO_NOTHING, unique=True, blank=True, null=True)
+    chembl = models.OneToOneField('ChemblIdLookup', models.DO_NOTHING, unique=True, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -366,7 +366,7 @@ class ComponentSynonyms(models.Model):
 
 
 class CompoundProperties(models.Model):
-    molregno = models.ForeignKey('MoleculeDictionary', models.DO_NOTHING, db_column='molregno', primary_key=True)
+    molregno = models.OneToOneField('MoleculeDictionary', models.DO_NOTHING, db_column='molregno', primary_key=True)
     mw_freebase = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True)
     alogp = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True)
     hba = models.IntegerField(blank=True, null=True)
@@ -422,7 +422,7 @@ class CompoundStructuralAlerts(models.Model):
 
 
 class CompoundStructures(models.Model):
-    molregno = models.ForeignKey('MoleculeDictionary', models.DO_NOTHING, db_column='molregno', primary_key=True)
+    molregno = models.OneToOneField('MoleculeDictionary', models.DO_NOTHING, db_column='molregno', primary_key=True)
     molfile = models.TextField(blank=True, null=True)
     standard_inchi = models.CharField(max_length=4000, blank=True, null=True)
     standard_inchi_key = models.CharField(unique=True, max_length=27)
@@ -484,7 +484,7 @@ class Docs(models.Model):
     last_page = models.CharField(max_length=50, blank=True, null=True)
     pubmed_id = models.BigIntegerField(unique=True, blank=True, null=True)
     doi = models.CharField(max_length=100, blank=True, null=True)
-    chembl = models.ForeignKey(ChemblIdLookup, models.DO_NOTHING, unique=True)
+    chembl = models.OneToOneField(ChemblIdLookup, models.DO_NOTHING, unique=True)
     title = models.CharField(max_length=500, blank=True, null=True)
     doc_type = models.CharField(max_length=50)
     authors = models.CharField(max_length=4000, blank=True, null=True)
@@ -638,7 +638,7 @@ class IracClassification(models.Model):
 
 
 class LigandEff(models.Model):
-    activity = models.ForeignKey(Activities, models.DO_NOTHING, primary_key=True)
+    activity = models.OneToOneField(Activities, models.DO_NOTHING, primary_key=True)
     bei = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True)
     sei = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True)
     le = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True)
@@ -713,7 +713,7 @@ class MoleculeAtcClassification(models.Model):
 class MoleculeDictionary(models.Model):
     molregno = models.BigIntegerField(primary_key=True)
     pref_name = models.CharField(max_length=255, blank=True, null=True)
-    chembl = models.ForeignKey(ChemblIdLookup, models.DO_NOTHING, unique=True)
+    chembl = models.OneToOneField(ChemblIdLookup, models.DO_NOTHING, unique=True)
     max_phase = models.SmallIntegerField()
     therapeutic_flag = models.SmallIntegerField()
     dosed_ingredient = models.SmallIntegerField()
@@ -760,7 +760,7 @@ class MoleculeFracClassification(models.Model):
 
 
 class MoleculeHierarchy(models.Model):
-    molregno = models.ForeignKey(MoleculeDictionary, models.DO_NOTHING, db_column='molregno', primary_key=True,
+    molregno = models.OneToOneField(MoleculeDictionary, models.DO_NOTHING, db_column='molregno', primary_key=True,
                                  related_name='as_child_molecule')
     parent_molregno = models.ForeignKey(MoleculeDictionary, models.DO_NOTHING, db_column='parent_molregno', blank=True,
                                         null=True, related_name='as_parent_molecule')
@@ -1026,7 +1026,7 @@ class TargetDictionary(models.Model):
     pref_name = models.CharField(max_length=200)
     tax_id = models.BigIntegerField(blank=True, null=True)
     organism = models.CharField(max_length=150, blank=True, null=True)
-    chembl = models.ForeignKey(ChemblIdLookup, models.DO_NOTHING, unique=True)
+    chembl = models.OneToOneField(ChemblIdLookup, models.DO_NOTHING, unique=True)
     species_group_flag = models.SmallIntegerField()
 
     class Meta:
@@ -1061,7 +1061,7 @@ class TissueDictionary(models.Model):
     uberon_id = models.CharField(max_length=15, blank=True, null=True)
     pref_name = models.CharField(max_length=200)
     efo_id = models.CharField(max_length=20, blank=True, null=True)
-    chembl = models.ForeignKey(ChemblIdLookup, models.DO_NOTHING, unique=True)
+    chembl = models.OneToOneField(ChemblIdLookup, models.DO_NOTHING, unique=True)
     bto_id = models.CharField(max_length=20, blank=True, null=True)
     caloha_id = models.CharField(max_length=7, blank=True, null=True)
 
