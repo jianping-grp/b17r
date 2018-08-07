@@ -88,7 +88,7 @@ class Molecule(models.Model):
     structure = MolField(null=True, blank=True)
     torsionbv = BfpField(null=True)
     atompairbv = BfpField(null=True)
-    mfp2 = BfpField(null=True, db_index=True)
+    mfp2 = BfpField(null=True)
     ffp2 = BfpField(null=True)
 
     # todo add fp index

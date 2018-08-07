@@ -277,6 +277,12 @@ def kegg_disease_tbl():
                     continue
             kegg_disease.save()
 
+def create_molecule_fp():
+    from django_rdkit.models import *
+
+    Molecule.objects.update(
+        mfp2=MORGANBV_FP('structure')
+    )
 
 def run():
     # print 'init molecule hirarchy'
@@ -305,4 +311,7 @@ def run():
 
     # print 'kegg disease'
     # kegg_disease_class_tbl()
-    kegg_disease_tbl()
+    # kegg_disease_tbl()
+
+    print 'update phin molecule with fingerprints'
+    create_molecule_fp()

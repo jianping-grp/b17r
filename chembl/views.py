@@ -1,4 +1,4 @@
-
+from django.db.models import Count, F
 from rest_framework import generics, permissions
 from dynamic_rest import viewsets
 from . import models, serializers
@@ -12,6 +12,7 @@ class ActionTypeViewSet(viewsets.DynamicModelViewSet):
 class ActivitiesViewSet(viewsets.DynamicModelViewSet):
     queryset = models.Activities.objects.all()
     serializer_class = serializers.ActivitiesSerializer
+    ordering = ('activity_id',)
 
 
 class ActivityPropertiesViewSet(viewsets.DynamicModelViewSet):
@@ -235,7 +236,9 @@ class MoleculeAtcClassificationViewSet(viewsets.DynamicModelViewSet):
 
 
 class MoleculeDictionaryViewSet(viewsets.DynamicModelViewSet):
-    queryset = models.MoleculeDictionary.objects.all()
+    queryset = models.MoleculeDictionary.objects.all().annotate(
+        activities_count=Count('activities')
+    )
     serializer_class = serializers.MoleculeDictionarySerializer
 
 
@@ -350,7 +353,7 @@ class TargetComponentsViewSet(viewsets.DynamicModelViewSet):
 
 
 class TargetDictionaryViewSet(viewsets.DynamicModelViewSet):
-    queryset = models.TargetDictionary.objects.all()
+    queryset = models.TargetDictionary.objects.all().annotate(assays_count=Count('assays'))
     serializer_class = serializers.TargetDictionarySerializer
 
 
@@ -382,5 +385,3 @@ class VariantSequencesViewSet(viewsets.DynamicModelViewSet):
 class VersionViewSet(viewsets.DynamicModelViewSet):
     queryset = models.Version.objects.all()
     serializer_class = serializers.VersionSerializer
-
-
