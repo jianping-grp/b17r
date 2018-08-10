@@ -285,6 +285,7 @@ def create_molecule_fp():
     )
 
 def run():
+    print 'start loading'
     # print 'init molecule hirarchy'
     # init_phin_molecule_hierarchy()
     #
@@ -309,9 +310,12 @@ def run():
     # print 'molecule interactions'
     # init_molecule_interaction_tbl()
 
+    print 'init target scaffold network'
+    init_target_scaffold_network_tbl()
+
     # print 'kegg disease'
     # kegg_disease_class_tbl()
     # kegg_disease_tbl()
 
-    print 'update phin molecule with fingerprints'
-    create_molecule_fp()
+    #print 'update phin molecule with fingerprints'
+    #create_molecule_fp()

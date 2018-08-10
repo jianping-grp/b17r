@@ -89,8 +89,8 @@ DATABASES = {
         'NAME': 'chembl_explorer',
         'HOST': 'localhost',
         'PORT': 5432,
-        'USER': 'jianping',
-        'PASSWORD': 'nankai123456'
+        'USER': 'your-user-name',
+        'PASSWORD': 'your-password'
     }
 }
 
