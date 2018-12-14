@@ -1110,4 +1110,4 @@ class Version(models.Model):
         managed = False
         db_table = 'version'
 
-##[jetbrains/home/zhonghua/workspace/python-space/chembl_explorer/chembl/models.py
+##[jetbrains/home/zhonghua/workspace/python-space/b17r/chembl/models.py

@@ -5,7 +5,7 @@ from rdkit.Chem.Scaffolds import MurckoScaffold
 from django_rdkit.models import *
 import itertools as it
 from django.db import connection
-from chembl_explorer import settings
+from b17r import settings
 import os
 
 
@@ -161,7 +161,7 @@ def init_target_scaffold_network_tbl():
         if target1.tid_id > target2.tid_id:
             target1, target2 = target2, target1
         comm = target1._get_common_scaffold_activities(target2)
-        if len(comm) > 0:
+        if len(comm) >=0:
             TargetScaffoldNetwork.objects.create(
                 first_target=target1,
                 second_target=target2,
