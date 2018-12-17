@@ -244,7 +244,7 @@ class MMPViewSet(viewsets.DynamicModelViewSet):
 
 
 class ICDViewSet(viewsets.DynamicModelViewSet):
-    queryset = models.ICD.objects.exclude(chembl_mappings=None).order_by('icd_id')
+    queryset = models.ICD.objects.all().order_by('icd_id')
     serializer_class =serializers.ICDSerializer
 
 
