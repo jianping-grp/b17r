@@ -276,3 +276,11 @@ class KEGGDisease(models.Model):
     kegg_id = models.CharField(max_length=64, unique=True)
     all_gene_accessions = ArrayField(models.CharField(max_length=32), blank=True, null=True)
     chembl_mappings = models.ManyToManyField(chembl_models.ComponentSequences)
+
+
+class ICD(models.Model):
+    icd_id = models.CharField(max_length=16, unique=True)
+    name = models.CharField(max_length=1024)
+    parent = TreeForeignKey('self', null=True, blank=True, related_name='children', db_index=True)
+    level = models.IntegerField(null=True, blank=True)
+    chembl_mappings = models.ManyToManyField(chembl_models.TargetDictionary)

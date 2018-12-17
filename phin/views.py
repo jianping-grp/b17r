@@ -83,7 +83,7 @@ class MoleculeViewSet(viewsets.DynamicModelViewSet):
             smiles = self.request.query_params.get('smiles')
             if search_type == 'substructure':
                 return models.Molecule.objects.filter(structure__hassubstruct=QMOL(Value(smiles))).all()
-            elif search_type == 'structure':
+            elif search_type == 'similarity':
 
                 similarity = self.request.query_params.get('similarity')
                 return models.Molecule.objects.structure_search(smiles, similarity)
@@ -241,6 +241,11 @@ class MMPViewSet(viewsets.DynamicModelViewSet):
             return Response(serializer.data)
 
         return Response(result)
+
+
+class ICDViewSet(viewsets.DynamicModelViewSet):
+    queryset = models.ICD.objects.exclude(chembl_mappings=None).order_by('icd_id')
+    serializer_class =serializers.ICDSerializer
 
 
 class KEGGDiseaseClassViewSet(viewsets.DynamicModelViewSet):

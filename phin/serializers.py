@@ -122,10 +122,19 @@ class KEGGDiseaseClassSerializer(serializers.DynamicModelSerializer):
         exclude = ['rght', 'lft']
 
 
+
 class KEGGDiseaseSerializer(serializers.DynamicModelSerializer):
     kegg_class = serializers.DynamicRelationField(KEGGDiseaseClassSerializer, embed=True)
     chembl_mappings = serializers.DynamicRelationField(chembl_serializers.ComponentSequencesSerializer, many=True)
 
     class Meta:
         model = models.KEGGDisease
+        exclude = []
+
+
+class ICDSerializer(serializers.DynamicModelSerializer):
+    chembl_mappings = serializers.DynamicRelationField(chembl_serializers.TargetDictionarySerializer, many=True)
+
+    class Meta:
+        model = models.ICD
         exclude = []

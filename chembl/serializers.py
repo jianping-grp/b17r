@@ -691,6 +691,10 @@ class TargetDictionarySerializer(serializers.DynamicModelSerializer):
         'TargetComponentsSerializer',
         many=True, deferred=True, embed=True
     )
+    icd_set = serializers.DynamicRelationField(
+        'phin.serializers.ICDSerializer',
+        many=True
+    )
 
     assays_count = IntegerField(read_only=True)
     phin_id = serializers.DynamicRelationField("phin.serializers.TargetSerializer", source='phin_target')
