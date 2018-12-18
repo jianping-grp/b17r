@@ -82,7 +82,7 @@ class MoleculeViewSet(viewsets.DynamicModelViewSet):
             search_type = self.request.query_params.get('search_type')
             smiles = self.request.query_params.get('smiles')
             if search_type == 'substructure':
-                return models.Molecule.objects.filter(structure__hassubstruct=QMOL(Value(smiles))).all()
+                return models.Molecule.objects.filter(structure__hassubstruct=smiles).all()
             elif search_type == 'similarity':
 
                 similarity = self.request.query_params.get('similarity')
@@ -136,7 +136,7 @@ class ScaffoldViewSet(viewsets.DynamicModelViewSet):
         print smiles, similarity, search_type
         result = {}
         if search_type == 'substructure':
-            result = models.Scaffold.objects.filter(structure__hassubstruct=QMOL(Value(smiles))).all()
+            result = models.Scaffold.objects.filter(structure__hassubstruct=smiles).all()
         # scaffold search
         else:
             try:
