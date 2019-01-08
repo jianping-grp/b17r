@@ -106,3 +106,6 @@ phin/scripts/log/
 *.pyc
 /.idea/
 /logs/
+
+
+pgdata/*

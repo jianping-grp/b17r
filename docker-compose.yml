@@ -1,13 +1,15 @@
-version: '2'
+version: '3'
 
 services:
   db:
-    image: postgres
+    image: z10g/b17r:v1
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data/
   web:
     build: .
-    command: python2 manage.py runserver 0.0.0.0:8000
+    command: python manage.py runserver 0.0.0.0:8000
     volumes:
-      - .:/code
+      - .:/b17r
     ports:
       - "8000:8000"
     depends_on:

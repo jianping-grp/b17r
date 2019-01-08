@@ -1,7 +1,16 @@
-FROM conda:miniconda2
-LABEL maintainer="zhonghua-wang <zhonghua.wang@outlook.com>"
+FROM python:2.7
 
-ADD . /code
-WORKDIR /code
-RUN  conda install -c rdkit rdkit==2017.09.03 && conda install -c rdkit rdkit-postgresql95
-RUN pip install -r requirment.txt
+# Set environment varibles
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# Set work directory
+RUN mkdir /b17r
+COPY . /b17r
+WORKDIR /b17r
+
+# Install dependencies
+RUN pip install -r requirements.txt
+
+# Copy project
+COPY . /b17r
