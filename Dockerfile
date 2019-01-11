@@ -1,4 +1,4 @@
-FROM python:2.7
+FROM z10g/b17r:v1
 
 # Set environment varibles
 ENV PYTHONDONTWRITEBYTECODE 1
@@ -10,7 +10,5 @@ COPY . /b17r
 WORKDIR /b17r
 
 # Install dependencies
-RUN pip install -r requirements.txt
+# RUN pip install -r requirements.txt
 
-# Copy project
-COPY . /b17r

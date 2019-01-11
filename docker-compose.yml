@@ -3,14 +3,15 @@ version: '3'
 services:
   db:
     image: z10g/b17r:v1
+    restart: always
     volumes:
-      - ./pgdata:/var/lib/postgresql/data/
+      - ${PWD}/pgdata:/var/lib/postgresql/data
   web:
     build: .
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/b17r
     ports:
-      - "8000:8000"
+      - 8000:8000
     depends_on:
       - db
