@@ -3,7 +3,7 @@
 ## Run in docker (recommended)
 
 1. Download the latest back-end code: `git clone https://github.com/jianping-grp/b17r`
-2. Download the postgres restore data: [google drive](https://drive.google.com/open?id=1aghIFwSRXQKiWeCDzVqO5ry9QLCSqKnM`) or [baidu yunpan](https://pan.baidu.com/s/1wvFt5DGY9-nUntoYnYDVmw)
+2. Download the postgres restore data: [google drive](https://drive.google.com/drive/folders/1aghIFwSRXQKiWeCDzVqO5ry9QLCSqKnM?usp=sharing`) or [baidu yunpan](https://pan.baidu.com/s/1wvFt5DGY9-nUntoYnYDVmw)
 3. Unzip the file (~83GB disk space will be used) `cat pgdata.tgz_* | gunzip -c > pgdata`
 4. Move the `pgdata` folder to b17r
 5. Run the docker container `docker-compose up -d --build`
