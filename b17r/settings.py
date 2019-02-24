@@ -139,7 +139,10 @@ GRAPHENE = {
         'graphene_django.debug.DjangoDebugMiddleware',
     ),
     'SCHEMA': 'b17r.schema.schema',
-    'SCHEMA_INDENT': 2
+    'SCHEMA_INDENT': 2,
+    'RELAY_CONNECTION_MAX_LIMIT': 100,
+    'RELAY_CONNECTION_ENFORCE_FIRST_OR_LAST': True
+
 }
 
 # DRF
@@ -182,3 +185,6 @@ try:
     from local_settings import *
 except ImportError:
     pass
+
+# graphql
+
