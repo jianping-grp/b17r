@@ -1,5 +1,8 @@
 from graphene import relay
-from graphene_django import DjangoConnectionField, DjangoObjectType
+from graphene_django import DjangoObjectType
+from graphene_django.filter import DjangoFilterConnectionField
+
+
 
 from . import models
 
@@ -108,19 +111,19 @@ class TargetDictionaryNode(DjangoObjectType):
 
 class Query(object):
     action_type = relay.Node.Field(ActionTypeNode)
-    all_action_types = DjangoConnectionField(ActionTypeNode)
+    all_action_types = DjangoFilterConnectionField(ActionTypeNode)
 
     assays = relay.Node.Field(AssaysNode)
-    all_assays = DjangoConnectionField(AssaysNode)
+    all_assays = DjangoFilterConnectionField(AssaysNode)
 
     activities = relay.Node.Field(ActivitiesNode)
-    all_activities = DjangoConnectionField(ActivitiesNode)
+    all_activities = DjangoFilterConnectionField(ActivitiesNode)
 
     target_dictionary = relay.Node.Field(TargetDictionaryNode)
-    all_target_dictionaries = DjangoConnectionField(TargetDictionaryNode)
+    all_target_dictionaries = DjangoFilterConnectionField(TargetDictionaryNode)
 
     target_type = relay.Node.Field(TargetTypeNode)
-    all_target_types = DjangoConnectionField(TargetTypeNode)
+    all_target_types = DjangoFilterConnectionField(TargetTypeNode)
 
     molecule_dictionary = relay.Node.Field(MoleculeDictionaryNode)
-    all_molecule_dictionary = DjangoConnectionField(MoleculeDictionaryNode)
+    all_molecule_dictionary = DjangoFilterConnectionField(MoleculeDictionaryNode)
