@@ -24,7 +24,7 @@ class ActivitiesNode(DjangoObjectType):
         #     'units', 'pchembl_value'
         # ]
         filter_fields = {
-            'assay__tid': ['exact'],
+            'assay__tid__tid': ['exact'],
             'pchembl_value': ['gt', 'lt']
         }
         interfaces = (relay.Node,)
