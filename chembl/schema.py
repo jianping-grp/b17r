@@ -75,6 +75,22 @@ class AssaysNode(DjangoObjectType):
         ]
         interfaces = (relay.Node, )
 
+class MoleculeDictionaryNode(DjangoObjectType):
+    model = models.MoleculeDictionary
+    filter_fields = [
+        'molregno', 'pref_name', 'chembl', 'max_phase',
+        'oral', 'topical'
+    ]
+
+
+class TargetTypeNode(DjangoObjectType):
+    class Meta:
+        model = models.TargetType
+        filter_fields = [
+            'target_type', 'target_desc', 'parent_type'
+        ]
+        interfaces = (relay.Node, )
+
 class TargetDictionaryNode(DjangoObjectType):
     class Meta:
         model = models.TargetDictionary
@@ -96,3 +112,9 @@ class Query(object):
 
     target_dictionary = relay.Node.Field(TargetDictionaryNode)
     all_target_dictionaries = DjangoConnectionField(TargetDictionaryNode)
+
+    target_type = relay.Node.Field(TargetTypeNode)
+    all_target_types = DjangoConnectionField(TargetTypeNode)
+
+    molecule_dictionary = relay.Node.Field(MoleculeDictionaryNode)
+    all_molecule_dictionary = DjangoConnectionField(MoleculeDictionaryNode)
