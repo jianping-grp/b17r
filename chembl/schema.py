@@ -76,11 +76,12 @@ class AssaysNode(DjangoObjectType):
         interfaces = (relay.Node, )
 
 class MoleculeDictionaryNode(DjangoObjectType):
-    model = models.MoleculeDictionary
-    filter_fields = [
-        'molregno', 'pref_name', 'chembl', 'max_phase',
-        'oral', 'topical'
-    ]
+    class Meta:
+        model = models.MoleculeDictionary
+        filter_fields = [
+            'molregno', 'pref_name', 'chembl', 'max_phase',
+            'oral', 'topical'
+        ]
 
 
 class TargetTypeNode(DjangoObjectType):
