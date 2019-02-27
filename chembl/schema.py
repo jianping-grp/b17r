@@ -14,12 +14,16 @@ class ActionTypeNode(DjangoObjectType):
 class ActivitiesNode(DjangoObjectType):
     class Meta:
         model = models.Activities
-        filter_fields = [
-            'activity_id', 'assay', 'doc', 'record', 'molregno',
-            'standard_relation', 'published_value', 'published_units',
-            'pchembl_value', 'type', 'toid', 'published_type', 'data_validity_comment',
-            'units'
-        ]
+        # filter_fields = [
+        #     'activity_id', 'assay', 'doc', 'record', 'molregno',
+        #     'standard_relation', 'published_value', 'published_units',
+        #     'pchembl_value', 'type', 'toid', 'published_type', 'data_validity_comment',
+        #     'units', 'pchembl_value'
+        # ]
+        filter_fields = {
+            'assay__tid': ['exact'],
+            'pchembl_value': ['gt', 'lt']
+        }
         interfaces = (relay.Node,)
 
 
