@@ -82,6 +82,7 @@ class MoleculeDictionaryNode(DjangoObjectType):
             'molregno', 'pref_name', 'chembl', 'max_phase',
             'oral', 'topical'
         ]
+        interfaces = (relay.Node, )
 
 
 class TargetTypeNode(DjangoObjectType):
