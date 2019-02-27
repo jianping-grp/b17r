@@ -23,7 +23,7 @@ from phin import urls as phin_urls
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url(r'^graphql/', csrf_exempt(GraphQLView.as_view(graphiql=True)), name='graphql'),
+    url(r'^b17r_api/graphql/', csrf_exempt(GraphQLView.as_view(graphiql=True)), name='graphql'),
     url(r'^b17r_api/chembl/', include(chembl_urls.routers.urls)),
     url(r'^b17r_api/phin/', include(phin_urls.urlpatterns))
 ]

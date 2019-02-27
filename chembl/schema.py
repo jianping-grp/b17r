@@ -63,6 +63,17 @@ class BindingSitesNode(DjangoObjectType):
         filter_fields = ['site_id', 'site_name', 'tid']
         interfaces = (relay.Node,)
 
+class AssaysNode(DjangoObjectType):
+    class Meta:
+        model = models.Assays
+        filter_fields = [
+            'assay_id', 'doc', 'assay_type',
+            'assay_test_type', 'assay_organism',
+            'assay_category', 'assay_tax_id',
+            'assay_tissue', 'assay_cell_type',
+            'tid', 'chembl', 'cell', 'variant'
+        ]
+        interfaces = (relay.Node, )
 
 class TargetDictionaryNode(DjangoObjectType):
     class Meta:
@@ -76,6 +87,9 @@ class TargetDictionaryNode(DjangoObjectType):
 class Query(object):
     action_type = relay.Node.Field(ActionTypeNode)
     all_action_types = DjangoConnectionField(ActionTypeNode)
+
+    assays = relay.Node.Field(AssaysNode)
+    all_assays = DjangoConnectionField(AssaysNode)
 
     activities = relay.Node.Field(ActivitiesNode)
     all_activities = DjangoConnectionField(ActivitiesNode)
