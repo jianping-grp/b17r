@@ -1,22 +1,39 @@
 """This module contains custom serializer classes."""
 import copy
 import inspect
+import os
 
 import inflection
 from django.db import models
 from django.utils import six
 from django.utils.functional import cached_property
+from rest_framework import __version__ as drf_version
 from rest_framework import exceptions, fields, serializers
+from rest_framework.relations import RelatedField
 from rest_framework.fields import SkipField
 from rest_framework.utils.serializer_helpers import ReturnDict, ReturnList
 
-from dynamic_rest.bases import DynamicSerializerBase
+from dynamic_rest import prefetch
+from dynamic_rest.bases import (
+    CacheableFieldMixin,
+    DynamicSerializerBase,
+    resettable_cached_property
+)
 from dynamic_rest.conf import settings
-from dynamic_rest.fields import DynamicRelationField
+from dynamic_rest.fields import (
+    DynamicRelationField,
+    DynamicGenericRelationField,
+)
 from dynamic_rest.links import merge_link_object
 from dynamic_rest.meta import get_model_table
-from dynamic_rest.processors import SideloadingProcessor
+from dynamic_rest.processors import SideloadingProcessor, post_process
 from dynamic_rest.tagged import tag_dict
+
+OPTS = {
+    'ENABLE_FIELDS_CACHE': os.environ.get('ENABLE_FIELDS_CACHE', False)
+}
+FIELDS_CACHE = {}
+DRF_VERSION = drf_version.split('.')
 
 
 class WithResourceKeyMixin(object):
@@ -29,7 +46,11 @@ class WithResourceKeyMixin(object):
             return self.get_name()
 
 
-class DynamicListSerializer(WithResourceKeyMixin, serializers.ListSerializer):
+class DynamicListSerializer(
+    CacheableFieldMixin,
+    WithResourceKeyMixin,
+    serializers.ListSerializer
+):
     """Custom ListSerializer class.
 
     This implementation delegates DREST-specific methods to
@@ -63,25 +84,25 @@ class DynamicListSerializer(WithResourceKeyMixin, serializers.ListSerializer):
         """Get the child's rendering mode."""
         return self.child.id_only()
 
-    @property
+    @resettable_cached_property
     def data(self):
         """Get the data, after performing post-processing if necessary."""
-        if not hasattr(self, '_processed_data'):
-            data = super(DynamicListSerializer, self).data
-            self._processed_data = ReturnDict(
-                SideloadingProcessor(self, data).data,
-                serializer=self
-            ) if self.child.envelope else ReturnList(
-                data,
-                serializer=self
-            )
-        return self._processed_data
+        data = super(DynamicListSerializer, self).data
+        processed_data = ReturnDict(
+            SideloadingProcessor(self, data).data,
+            serializer=self
+        ) if self.child.envelope else ReturnList(
+            data,
+            serializer=self
+        )
+        processed_data = post_process(processed_data)
+        return processed_data
 
     def update(self, queryset, validated_data):
         lookup_attr = getattr(self.child.Meta, 'update_lookup_field', 'id')
 
         lookup_objects = {
-            entry.pop(lookup_attr): entry
+            str(entry.pop(lookup_attr)): entry
             for entry in validated_data
         }
 
@@ -93,9 +114,14 @@ class DynamicListSerializer(WithResourceKeyMixin, serializers.ListSerializer):
         # Since this method is given a queryset which can have many
         # model instances, first find all objects to update
         # and only then update the models.
-        objects_to_update = queryset.filter(
-            **{'{}__in'.format(lookup_attr): lookup_keys}
-        )
+        try:
+            objects_to_update = queryset.filter(
+                **{'{}__in'.format(lookup_attr): lookup_keys}
+            )
+        except Exception:
+            raise exceptions.ValidationError(
+                'Invalid lookup keys: %s' % ', '.join(lookup_keys)
+            )
 
         if len(lookup_keys) != objects_to_update.count():
             raise exceptions.ValidationError(
@@ -106,6 +132,7 @@ class DynamicListSerializer(WithResourceKeyMixin, serializers.ListSerializer):
         updated_objects = []
         for object_to_update in objects_to_update:
             lookup_key = getattr(object_to_update, lookup_attr)
+            lookup_key = str(lookup_key)
             data = lookup_objects.get(lookup_key)
             # Use model serializer to actually update the model
             # in case that method is overwritten.
@@ -114,7 +141,11 @@ class DynamicListSerializer(WithResourceKeyMixin, serializers.ListSerializer):
         return updated_objects
 
 
-class WithDynamicSerializerMixin(WithResourceKeyMixin, DynamicSerializerBase):
+class WithDynamicSerializerMixin(
+    CacheableFieldMixin,
+    WithResourceKeyMixin,
+    DynamicSerializerBase
+):
     """Base class for DREST serializers.
 
     This class provides support for dynamic field inclusions/exclusions.
@@ -130,6 +161,9 @@ class WithDynamicSerializerMixin(WithResourceKeyMixin, DynamicSerializerBase):
         - read_only_fields - list of strings
         - untrimmed_fields - list of strings
     """
+
+    ENABLE_FIELDS_CACHE = False
+
     def __new__(cls, *args, **kwargs):
         """
         Custom constructor that sets the ListSerializer to
@@ -142,8 +176,12 @@ class WithDynamicSerializerMixin(WithResourceKeyMixin, DynamicSerializerBase):
         if not meta:
             meta = type('Meta', (), {})
             cls.Meta = meta
+
         list_serializer_class = getattr(
-            meta, 'list_serializer_class', DynamicListSerializer)
+            meta,
+            'list_serializer_class',
+            settings.LIST_SERIALIZER_CLASS or DynamicListSerializer
+        )
         if not issubclass(list_serializer_class, DynamicListSerializer):
             list_serializer_class = DynamicListSerializer
         meta.list_serializer_class = list_serializer_class
@@ -253,7 +291,6 @@ class WithDynamicSerializerMixin(WithResourceKeyMixin, DynamicSerializerBase):
         only_fields = set(only_fields or [])
         include_fields = include_fields or []
         exclude_fields = exclude_fields or []
-        all_fields = set(self.get_all_fields().keys())
 
         if only_fields:
             exclude_fields = '*'
@@ -267,8 +304,10 @@ class WithDynamicSerializerMixin(WithResourceKeyMixin, DynamicSerializerBase):
                     if val or val == {}
                 ]
             )
+            all_fields = set(self.get_all_fields().keys())  # this is slow
             exclude_fields = all_fields - include_fields
         elif include_fields == '*':
+            all_fields = set(self.get_all_fields().keys())  # this is slow
             include_fields = all_fields
 
         for name in exclude_fields:
@@ -333,19 +372,40 @@ class WithDynamicSerializerMixin(WithResourceKeyMixin, DynamicSerializerBase):
             ''
         ).upper()
 
-    def get_all_fields(self):
+    @resettable_cached_property
+    def _all_fields(self):
         """Returns the entire serializer field set.
 
         Does not respect dynamic field inclusions/exclusions.
         """
-        if not hasattr(self, '_all_fields'):
-            self._all_fields = super(
+        if (
+            not settings.ENABLE_FIELDS_CACHE or
+            not self.ENABLE_FIELDS_CACHE or
+            self.__class__ not in FIELDS_CACHE
+        ):
+            all_fields = super(
                 WithDynamicSerializerMixin,
                 self
             ).get_fields()
-            for k, field in six.iteritems(self._all_fields):
-                field.field_name = k
-                field.parent = self
+
+            if (
+                settings.ENABLE_FIELDS_CACHE and
+                self.ENABLE_FIELDS_CACHE
+            ):
+                FIELDS_CACHE[self.__class__] = all_fields
+        else:
+            all_fields = copy.copy(FIELDS_CACHE[self.__class__])
+            for k, field in six.iteritems(all_fields):
+                if hasattr(field, 'reset'):
+                    field.reset()
+
+        for k, field in six.iteritems(all_fields):
+            field.field_name = k
+            field.parent = self
+
+        return all_fields
+
+    def get_all_fields(self):
         return self._all_fields
 
     def _get_flagged_field_names(self, fields, attr, meta_attr=None):
@@ -454,30 +514,31 @@ class WithDynamicSerializerMixin(WithResourceKeyMixin, DynamicSerializerBase):
         return isinstance(self.request_fields.get(field_name), dict)
 
     def get_link_fields(self):
-        """Construct dict of name:field for linkable fields."""
-        if not hasattr(self, '_link_fields'):
-            query_params = self.get_request_attribute('query_params', {})
-            if 'exclude_links' in query_params:
-                self._link_fields = {}
-            else:
-                all_fields = self.get_all_fields()
-                self._link_fields = {
-                    name: field for name, field in six.iteritems(all_fields)
-                    if isinstance(field, DynamicRelationField) and
-                    getattr(field, 'link', True) and
-                    not (
-                        # Skip sideloaded fields
-                        name in self.fields and
-                        self.is_field_sideloaded(name)
-                    ) and not (
-                        # Skip included single relations
-                        # TODO: Use links, when we can generate canonical URLs
-                        name in self.fields and
-                        not getattr(field, 'many', False)
-                    )
-                }
-
         return self._link_fields
+
+    @resettable_cached_property
+    def _link_fields(self):
+        """Construct dict of name:field for linkable fields."""
+        query_params = self.get_request_attribute('query_params', {})
+        if 'exclude_links' in query_params:
+            return {}
+        else:
+            all_fields = self.get_all_fields()
+            return {
+                name: field for name, field in six.iteritems(all_fields)
+                if isinstance(field, DynamicRelationField) and
+                getattr(field, 'link', True) and
+                not (
+                    # Skip sideloaded fields
+                    name in self.fields and
+                    self.is_field_sideloaded(name)
+                ) and not (
+                    # Skip included single relations
+                    # TODO: Use links, when we can generate canonical URLs
+                    name in self.fields and
+                    not getattr(field, 'many', False)
+                )
+            }
 
     @cached_property
     def _readable_fields(self):
@@ -486,6 +547,22 @@ class WithDynamicSerializerMixin(WithResourceKeyMixin, DynamicSerializerBase):
             field for field in self.fields.values()
             if not field.write_only
         ]
+
+    @cached_property
+    def _readable_id_fields(self):
+        fields = self._readable_fields
+        return {
+            field for field in fields
+            if (
+                isinstance(
+                    field,
+                    (DynamicRelationField, RelatedField)
+                )
+                and not isinstance(
+                    self.request_fields.get(field.field_name), dict
+                )
+            )
+        }
 
     def _faster_to_representation(self, instance):
         """Modified to_representation with optimizations.
@@ -504,11 +581,48 @@ class WithDynamicSerializerMixin(WithResourceKeyMixin, DynamicSerializerBase):
         ret = {}
         fields = self._readable_fields
 
+        is_fast = isinstance(instance, prefetch.FastObject)
+        id_fields = self._readable_id_fields
+
         for field in fields:
-            try:
-                attribute = field.get_attribute(instance)
-            except SkipField:
-                continue
+            attribute = None
+
+            # we exclude dynamic fields here because the proper fastquery
+            # dereferencing happens in the `get_attribute` method now
+            if (
+                is_fast and
+                not isinstance(
+                    field,
+                    (DynamicGenericRelationField, DynamicRelationField)
+                )
+            ):
+                if field in id_fields and field.source not in instance:
+                    # TODO - make better.
+                    attribute = instance.get(field.source + '_id')
+                    ret[field.field_name] = attribute
+                    continue
+                else:
+                    try:
+                        attribute = instance[field.source]
+                    except KeyError:
+                        # slower, but does more stuff
+                        # Also, some temp debugging
+                        if hasattr(instance, field.source):
+                            attribute = getattr(instance, field.source)
+                        else:
+                            # Fall back on DRF behavior
+                            attribute = field.get_attribute(instance)
+                            print(
+                                'Missing %s from %s' % (
+                                    field.field_name,
+                                    self.__class__.__name__
+                                )
+                            )
+            else:
+                try:
+                    attribute = field.get_attribute(instance)
+                except SkipField:
+                    continue
 
             if attribute is None:
                 # We skip `to_representation` for `None` values so that
@@ -519,32 +633,29 @@ class WithDynamicSerializerMixin(WithResourceKeyMixin, DynamicSerializerBase):
 
         return ret
 
-    def to_representation(self, instance):
-        """Modified to_representation method.
+    @resettable_cached_property
+    def obj_cache(self):
+        # Note: This gets cached by resettable_cached_property so this
+        #       function only needs to return the initial value.
+        return {}
 
-        Arguments:
-            instance: A model instance or data object.
-        Returns:
-            Instance ID if the serializer is meant to represent its ID.
-            Otherwise, a tagged data dict representation.
-        """
-        if self.id_only():
-            return instance.pk
+    def _to_representation(self, instance):
+        """Uncached `to_representation`."""
+
+        if self.enable_optimization:
+            representation = self._faster_to_representation(instance)
         else:
-            if self.enable_optimization:
-                representation = self._faster_to_representation(instance)
-            else:
-                representation = super(
-                    WithDynamicSerializerMixin,
-                    self
-                ).to_representation(instance)
+            representation = super(
+                WithDynamicSerializerMixin,
+                self
+            ).to_representation(instance)
 
-            if settings.ENABLE_LINKS:
-                # TODO: Make this function configurable to support other
-                #       formats like JSON API link objects.
-                representation = merge_link_object(
-                    self, representation, instance
-                )
+        if settings.ENABLE_LINKS:
+            # TODO: Make this function configurable to support other
+            #       formats like JSON API link objects.
+            representation = merge_link_object(
+                self, representation, instance
+            )
 
         if self.debug:
             representation['_meta'] = {
@@ -559,6 +670,26 @@ class WithDynamicSerializerMixin(WithResourceKeyMixin, DynamicSerializerBase):
             instance=instance,
             embed=self.embed
         )
+
+    def to_representation(self, instance):
+        """Modified to_representation method. Optionally may cache objects.
+
+        Arguments:
+            instance: A model instance or data object.
+        Returns:
+            Instance ID if the serializer is meant to represent its ID.
+            Otherwise, a tagged data dict representation.
+        """
+        if self.id_only():
+            return instance.pk
+
+        pk = getattr(instance, 'pk', None)
+        if not settings.ENABLE_SERIALIZER_OBJECT_CACHE or pk is None:
+            return self._to_representation(instance)
+        else:
+            if pk not in self.obj_cache:
+                self.obj_cache[pk] = self._to_representation(instance)
+            return self.obj_cache[pk]
 
     def to_internal_value(self, data):
         value = super(WithDynamicSerializerMixin, self).to_internal_value(data)
@@ -587,10 +718,12 @@ class WithDynamicSerializerMixin(WithResourceKeyMixin, DynamicSerializerBase):
             **kwargs
         )
         view = self._context.get('view')
-        if update and view:
-            # Reload the object on update
-            # to get around prefetch cache issues
-            instance = self.instance = view.get_object()
+        if view and update:
+            if int(DRF_VERSION[0]) <= 3 and int(DRF_VERSION[1]) < 5:
+                # Reload the object on update
+                # to get around prefetch cache issues
+                # Fixed in DRF in 3.5.0
+                instance = self.instance = view.get_object()
         return instance
 
     def id_only(self):
@@ -601,17 +734,18 @@ class WithDynamicSerializerMixin(WithResourceKeyMixin, DynamicSerializerBase):
         """
         return self.dynamic and self.request_fields is True
 
-    @property
+    @resettable_cached_property
     def data(self):
         if not hasattr(self, '_processed_data'):
             data = super(WithDynamicSerializerMixin, self).data
             data = SideloadingProcessor(
                 self, data
             ).data if self.envelope else data
-            self._processed_data = ReturnDict(
+            processed_data = ReturnDict(
                 data,
                 serializer=self
             )
+            self._processed_data = post_process(processed_data)
         return self._processed_data
 
 

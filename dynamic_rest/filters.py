@@ -2,7 +2,7 @@
 
 from django.core.exceptions import ValidationError as InternalValidationError
 from django.core.exceptions import ImproperlyConfigured
-from django.db.models import Q, Prefetch
+from django.db.models import Q, Prefetch, Manager
 from django.utils import six
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -20,6 +20,7 @@ from dynamic_rest.meta import (
     get_related_model
 )
 from dynamic_rest.patches import patch_prefetch_one_level
+from dynamic_rest.prefetch import FastQuery, FastPrefetch
 from dynamic_rest.related import RelatedObject
 
 patch_prefetch_one_level()
@@ -165,6 +166,7 @@ class DynamicFilterBackend(BaseFilterBackend):
         'day',
         'week_day',
         'regex',
+        'iregex',
         'range',
         'gt',
         'lt',
@@ -184,8 +186,22 @@ class DynamicFilterBackend(BaseFilterBackend):
         self.request = request
         self.view = view
 
+        # enable addition of extra filters (i.e., a Q())
+        # so custom filters can be added to the queryset without
+        # running into https://code.djangoproject.com/ticket/18437
+        # which, without this, would mean that filters added to the queryset
+        # after this is called may not behave as expected
+        extra_filters = self.view.get_extra_filters(request)
+
+        disable_prefetches = self.view.is_update()
+
         self.DEBUG = settings.DEBUG
-        return self._build_queryset(queryset=queryset)
+
+        return self._build_queryset(
+            queryset=queryset,
+            extra_filters=extra_filters,
+            disable_prefetches=disable_prefetches,
+        )
 
     """
     This function was renamed and broke downstream dependencies that haven't
@@ -306,6 +322,9 @@ class DynamicFilterBackend(BaseFilterBackend):
                 q &= ~Q(**{k: v})
         return q
 
+    def _create_prefetch(self, source, queryset):
+        return Prefetch(source, queryset=queryset)
+
     def _build_implicit_prefetches(
         self,
         model,
@@ -327,17 +346,20 @@ class DynamicFilterBackend(BaseFilterBackend):
                 remainder
             ) if related_model else None
 
-            prefetches[source] = Prefetch(
+            prefetches[source] = self._create_prefetch(
                 source,
-                queryset=queryset
+                queryset
             )
 
         return prefetches
 
+    def _make_model_queryset(self, model):
+        return model.objects.all()
+
     def _build_implicit_queryset(self, model, requirements):
         """Build a queryset based on implicit requirements."""
 
-        queryset = model.objects.all()
+        queryset = self._make_model_queryset(model)
         prefetches = {}
         self._build_implicit_prefetches(
             model,
@@ -408,9 +430,9 @@ class DynamicFilterBackend(BaseFilterBackend):
             #       the same source. This could break in some cases,
             #       but is mostly an issue on writes when we use all
             #       fields by default.
-            prefetches[source] = Prefetch(
+            prefetches[source] = self._create_prefetch(
                 source,
-                queryset=prefetch_queryset
+                prefetch_queryset
             )
 
         return prefetches
@@ -438,12 +460,23 @@ class DynamicFilterBackend(BaseFilterBackend):
                     requirement[-1] = '*'
                 requirements.insert(requirement, TreeMap(), update=True)
 
+    def _get_queryset(self, queryset=None, serializer=None):
+        if serializer and queryset is None:
+            queryset = serializer.Meta.model.objects
+
+        return queryset
+
+    def _serializer_filter(self, serializer=None, queryset=None):
+        return serializer.filter_queryset(queryset)
+
     def _build_queryset(
         self,
         serializer=None,
         filters=None,
         queryset=None,
-        requirements=None
+        requirements=None,
+        extra_filters=None,
+        disable_prefetches=False,
     ):
         """Build a queryset that pulls in all data required by this request.
 
@@ -460,12 +493,11 @@ class DynamicFilterBackend(BaseFilterBackend):
         """
 
         is_root_level = False
-        if serializer:
-            if queryset is None:
-                queryset = serializer.Meta.model.objects
-        else:
+        if not serializer:
             serializer = self.view.get_serializer()
             is_root_level = True
+
+        queryset = self._get_queryset(queryset=queryset, serializer=serializer)
 
         model = getattr(serializer.Meta, 'model', None)
 
@@ -531,6 +563,10 @@ class DynamicFilterBackend(BaseFilterBackend):
             serializer=serializer
         )
 
+        # add additional filters specified by calling view
+        if extra_filters:
+            query = extra_filters if not query else extra_filters & query
+
         if query:
             # Convert internal django ValidationError to
             # APIException-based one in order to resolve validation error
@@ -554,16 +590,50 @@ class DynamicFilterBackend(BaseFilterBackend):
         # serializers for different subsets of a model or to
         # implement permissions which work even in sideloads
         if hasattr(serializer, 'filter_queryset'):
-            queryset = serializer.filter_queryset(queryset)
+            queryset = self._serializer_filter(
+                serializer=serializer,
+                queryset=queryset
+            )
 
         # add prefetches and remove duplicates if necessary
         prefetch = prefetches.values()
-        queryset = queryset.prefetch_related(*prefetch)
+        if prefetch and not disable_prefetches:
+            queryset = queryset.prefetch_related(*prefetch)
+        elif isinstance(queryset, Manager):
+            queryset = queryset.all()
         if has_joins(queryset) or not is_root_level:
             queryset = queryset.distinct()
 
         if self.DEBUG:
             queryset._using_prefetches = prefetches
+        return queryset
+
+
+class FastDynamicFilterBackend(DynamicFilterBackend):
+    def _create_prefetch(self, source, queryset):
+        return FastPrefetch(source, queryset=queryset)
+
+    def _get_queryset(self, queryset=None, serializer=None):
+        queryset = super(FastDynamicFilterBackend, self)._get_queryset(
+            queryset=queryset,
+            serializer=serializer
+        )
+
+        if not isinstance(queryset, FastQuery):
+            queryset = FastQuery(queryset)
+
+        return queryset
+
+    def _make_model_queryset(self, model):
+        queryset = super(FastDynamicFilterBackend, self)._make_model_queryset(
+            model
+        )
+        return FastQuery(queryset)
+
+    def _serializer_filter(self, serializer=None, queryset=None):
+        queryset.queryset = serializer.filter_queryset(
+            queryset.queryset
+        )
         return queryset
 
 
@@ -620,11 +690,6 @@ class DynamicSortingFilter(OrderingFilter):
         Overwrites the DRF default remove_invalid_fields method to return
         both the valid orderings and any invalid orderings.
         """
-        # get valid field names for sorting
-        valid_fields_map = {
-            name: source for name, source in self.get_valid_fields(
-                queryset, view)
-        }
 
         valid_orderings = []
         invalid_orderings = []
@@ -635,45 +700,76 @@ class DynamicSortingFilter(OrderingFilter):
             stripped_term = term.lstrip('-')
             # add back the '-' add the end if necessary
             reverse_sort_term = '' if len(stripped_term) is len(term) else '-'
-            if stripped_term in valid_fields_map:
-                name = reverse_sort_term + valid_fields_map[stripped_term]
-                valid_orderings.append(name)
+            ordering = self.ordering_for(stripped_term, view)
+
+            if ordering:
+                valid_orderings.append(reverse_sort_term + ordering)
             else:
                 invalid_orderings.append(term)
 
         return valid_orderings, invalid_orderings
 
-    def get_valid_fields(self, queryset, view, context={}):
-        """Return valid fields for ordering.
-
-        Overwrites DRF's get_valid_fields method so that valid_fields returns
-        serializer fields, not model fields.
+    def ordering_for(self, term, view):
         """
+        Return ordering (model field chain) for term (serializer field chain)
+        or None if invalid
+
+        Raise ImproperlyConfigured if serializer_class not set on view
+        """
+        if not self._is_allowed_term(term, view):
+            return None
+
+        serializer = self._get_serializer_class(view)()
+        serializer_chain = term.split('.')
+
+        model_chain = []
+
+        for segment in serializer_chain[:-1]:
+            field = serializer.get_all_fields().get(segment)
+
+            if not (field and field.source != '*' and
+                    isinstance(field, DynamicRelationField)):
+                return None
+
+            model_chain.append(field.source or segment)
+
+            serializer = field.serializer_class()
+
+        last_segment = serializer_chain[-1]
+        last_field = serializer.get_all_fields().get(last_segment)
+
+        if not last_field or last_field.source == '*':
+            return None
+
+        model_chain.append(last_field.source or last_segment)
+
+        return '__'.join(model_chain)
+
+    def _is_allowed_term(self, term, view):
         valid_fields = getattr(view, 'ordering_fields', self.ordering_fields)
+        all_fields_allowed = valid_fields is None or valid_fields == '__all__'
 
-        if valid_fields is None or valid_fields == '__all__':
-            # Default to allowing filtering on serializer fields
-            serializer_class = getattr(view, 'serializer_class')
-            if serializer_class is None:
-                msg = (
-                    "Cannot use %s on a view which does not have either a "
-                    "'serializer_class' or 'ordering_fields' attribute."
-                )
-                raise ImproperlyConfigured(msg % self.__class__.__name__)
-            valid_fields = [
-                (field_name, field.source or field_name)
-                for field_name, field in serializer_class().fields.items()
-                if not getattr(
-                    field, 'write_only', False
-                ) and not field.source == '*'
-            ]
+        return all_fields_allowed or term in valid_fields
+
+    def _get_serializer_class(self, view):
+        # prefer the overriding method
+        if hasattr(view, 'get_serializer_class'):
+            try:
+                serializer_class = view.get_serializer_class()
+            except AssertionError:
+                # Raised by the default implementation if
+                # no serializer_class was found
+                serializer_class = None
+        # use the attribute
         else:
-            serializer_class = getattr(view, 'serializer_class')
-            valid_fields = [
-                (field_name, field.source or field_name)
-                for field_name, field in serializer_class().fields.items()
-                if not getattr(field, 'write_only', False) and
-                not field.source == '*' and field_name in valid_fields
-            ]
+            serializer_class = getattr(view, 'serializer_class', None)
 
-        return valid_fields
+        # neither a method nor an attribute has been specified
+        if serializer_class is None:
+            msg = (
+                "Cannot use %s on a view which does not have either a "
+                "'serializer_class' or an overriding 'get_serializer_class'."
+            )
+            raise ImproperlyConfigured(msg % self.__class__.__name__)
+
+        return serializer_class

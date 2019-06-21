@@ -9,6 +9,38 @@ from dynamic_rest.conf import settings
 from dynamic_rest.tagged import TaggedDict
 
 
+POST_PROCESSORS = {}
+
+
+def register_post_processor(func):
+    """
+    Register a post processor function to be run as the final step in
+    serialization. The data passed in will already have gone through the
+    sideloading processor.
+
+    Usage:
+        @register_post_processor
+        def my_post_processor(data):
+            # do stuff with `data`
+            return data
+    """
+
+    global POST_PROCESSORS
+
+    key = func.__name__
+    POST_PROCESSORS[key] = func
+    return func
+
+
+def post_process(data):
+    """Apply registered post-processors to data."""
+
+    for post_processor in POST_PROCESSORS.values():
+        data = post_processor(data)
+
+    return data
+
+
 class SideloadingProcessor(object):
     """A processor that sideloads serializer data.
 
@@ -118,6 +150,12 @@ class SideloadingProcessor(object):
                     # move the object into a new top-level bucket
                     # and mark it as seen
                     self.data[name].append(obj)
+                else:
+                    # obj sideloaded, but maybe with other fields
+                    for o in self.data.get(name, []):
+                        if o.instance.pk == pk:
+                            o.update(obj)
+                            break
 
                 # replace the object with a reference
                 if parent is not None and parent_key is not None:
