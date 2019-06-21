@@ -1,5 +1,8 @@
 from graphene import relay
-from graphene_django import DjangoConnectionField, DjangoObjectType
+from graphene_django import DjangoObjectType
+from graphene_django.filter import DjangoFilterConnectionField
+
+
 
 from . import models
 
@@ -14,12 +17,16 @@ class ActionTypeNode(DjangoObjectType):
 class ActivitiesNode(DjangoObjectType):
     class Meta:
         model = models.Activities
-        filter_fields = [
-            'activity_id', 'assay', 'doc', 'record', 'molregno',
-            'standard_relation', 'published_value', 'published_units',
-            'pchembl_value', 'type', 'toid', 'published_type', 'data_validity_comment',
-            'units'
-        ]
+        # filter_fields = [
+        #     'activity_id', 'assay', 'doc', 'record', 'molregno',
+        #     'standard_relation', 'published_value', 'published_units',
+        #     'pchembl_value', 'type', 'toid', 'published_type', 'data_validity_comment',
+        #     'units', 'pchembl_value'
+        # ]
+        filter_fields = {
+            'assay__tid__tid': ['exact'],
+            'pchembl_value': ['gt', 'lt']
+        }
         interfaces = (relay.Node,)
 
 
@@ -63,6 +70,35 @@ class BindingSitesNode(DjangoObjectType):
         filter_fields = ['site_id', 'site_name', 'tid']
         interfaces = (relay.Node,)
 
+class AssaysNode(DjangoObjectType):
+    class Meta:
+        model = models.Assays
+        filter_fields = [
+            'assay_id', 'doc', 'assay_type',
+            'assay_test_type', 'assay_organism',
+            'assay_category', 'assay_tax_id',
+            'assay_tissue', 'assay_cell_type',
+            'tid', 'chembl', 'cell', 'variant'
+        ]
+        interfaces = (relay.Node, )
+
+class MoleculeDictionaryNode(DjangoObjectType):
+    class Meta:
+        model = models.MoleculeDictionary
+        filter_fields = [
+            'molregno', 'pref_name', 'chembl', 'max_phase',
+            'oral', 'topical'
+        ]
+        interfaces = (relay.Node, )
+
+
+class TargetTypeNode(DjangoObjectType):
+    class Meta:
+        model = models.TargetType
+        filter_fields = [
+            'target_type', 'target_desc', 'parent_type'
+        ]
+        interfaces = (relay.Node, )
 
 class TargetDictionaryNode(DjangoObjectType):
     class Meta:
@@ -75,10 +111,19 @@ class TargetDictionaryNode(DjangoObjectType):
 
 class Query(object):
     action_type = relay.Node.Field(ActionTypeNode)
-    all_action_types = DjangoConnectionField(ActionTypeNode)
+    all_action_types = DjangoFilterConnectionField(ActionTypeNode)
+
+    assays = relay.Node.Field(AssaysNode)
+    all_assays = DjangoFilterConnectionField(AssaysNode)
 
     activities = relay.Node.Field(ActivitiesNode)
-    all_activities = DjangoConnectionField(ActivitiesNode)
+    all_activities = DjangoFilterConnectionField(ActivitiesNode)
 
     target_dictionary = relay.Node.Field(TargetDictionaryNode)
-    all_target_dictionaries = DjangoConnectionField(TargetDictionaryNode)
+    all_target_dictionaries = DjangoFilterConnectionField(TargetDictionaryNode)
+
+    target_type = relay.Node.Field(TargetTypeNode)
+    all_target_types = DjangoFilterConnectionField(TargetTypeNode)
+
+    molecule_dictionary = relay.Node.Field(MoleculeDictionaryNode)
+    all_molecule_dictionary = DjangoFilterConnectionField(MoleculeDictionaryNode)
