@@ -1,6 +1,6 @@
 # Bioactivity-explorer (b17r)
 
-*For network issue, the b17r site will not be avaliable 2019/09/01-2019/09/10 and 2019/09/26-2019/09/28. Sorry for the inconvenience.*
+*For network issue, the b17r site will not be avaliable during 2019/09/01-2019/09/10 and 2019/09/26-2019/09/28. Sorry for the inconvenience.*
 
 ## Run in docker (recommended)
 
