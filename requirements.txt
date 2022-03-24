@@ -5,7 +5,7 @@ django-graphiql==0.4.4
 django-js-asset==0.1.1
 django-mptt==0.9.0
 django-templated-mail==1.0.0
-djangorestframework==3.7.7
+djangorestframework==3.11.2
 djoser==1.1.1
 graphene==2.0.1
 graphene-django==2.0.0
