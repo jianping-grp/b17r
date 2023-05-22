@@ -24,7 +24,7 @@ promise==2.1
 psycopg2==2.7.3.2
 python-dateutil==2.6.1
 pytz==2017.3
-requests==2.18.4
+requests==2.31.0
 Rx==1.6.0
 six==1.11.0
 typing==3.6.4
